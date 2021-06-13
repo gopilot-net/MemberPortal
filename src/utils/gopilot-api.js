@@ -1,5 +1,19 @@
-function setupGoPilotApi({siteUrl = window.location.origin}) {
-    const apiPath = 'members/api';
+export const config = {
+    local: {},
+    development: {},
+    production: {}
+};
+
+export const GoPilotStyles = `
+    .gh-portal-header-msg {
+      text-align: center;
+      max-width: 420px;
+      margin:10px auto;
+    }  
+  `;
+
+function setupGoPilotApi({siteUrl = process.env.REACT_APP_GOPILOT_API_SITE_URL}) {
+    const apiPath = 'api/member-portal';
 
     function endpointFor({type, resource}) {
         if (type === 'members') {
@@ -18,9 +32,9 @@ function setupGoPilotApi({siteUrl = window.location.origin}) {
     }
     const api = {};
 
-    api.site = {
+    api.settings = {
         read() {
-            const url = endpointFor({type: 'members', resource: 'site'});
+            const url = endpointFor({type: 'members', resource: 'settings'});
             return makeRequest({
                 url,
                 method: 'GET',
@@ -31,17 +45,17 @@ function setupGoPilotApi({siteUrl = window.location.origin}) {
                 if (res.ok) {
                     return res.json();
                 } else {
-                    throw new Error('Failed to fetch site data');
+                    throw new Error('Failed to fetch settings data');
                 }
             });
         }
     };
 
     api.init = async () => {
-        const [{portalData}] = await Promise.all([
-            api.site.read()
+        const [{portalSettings}] = await Promise.all([
+            api.settings.read()
         ]);
-        return {portalData};
+        return {portalSettings};
     };
 
     return api;

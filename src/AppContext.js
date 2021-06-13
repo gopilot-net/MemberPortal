@@ -2,6 +2,7 @@
 const React = require('react');
 
 const AppContext = React.createContext({
+    portalSettings: {},
     site: {},
     member: {},
     action: '',

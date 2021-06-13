@@ -2,6 +2,7 @@ import TriggerButton from './components/TriggerButton';
 import Notification from './components/Notification';
 import PopupModal from './components/PopupModal';
 import setupGhostApi from './utils/api';
+import setupGoPilotApi from './utils/gopilot-api';
 import AppContext from './AppContext';
 import {hasMode} from './utils/check-mode';
 import {getActivePage, isAccountPage} from './pages';
@@ -128,8 +129,9 @@ export default class App extends React.Component {
     async initSetup() {
         try {
             // Fetch data from API, links, preview, dev sources
-            const {site, member, page, showPopup, popupNotification, lastPage, pageQuery} = await this.fetchData();
+            const {portalSettings, site, member, page, showPopup, popupNotification, lastPage, pageQuery} = await this.fetchData();
             const state = {
+                portalSettings,
                 site,
                 member,
                 page,
@@ -162,6 +164,7 @@ export default class App extends React.Component {
 
     /** Fetch state data from all available sources */
     async fetchData() {
+        const {portalSettings: goPilotportalSettings} = await this.fetchGoPilotApiData();
         const {site: apiSiteData, member} = await this.fetchApiData();
         const {site: devSiteData, ...restDevData} = this.fetchDevData();
         const {site: linkSiteData, ...restLinkData} = this.fetchLinkData();
@@ -187,7 +190,11 @@ export default class App extends React.Component {
             ...restDevData,
             ...restLinkData,
             ...restNotificationData,
-            ...restPreviewData
+            ...restPreviewData,
+            portalSettings: {
+                ...restDevData.portalSettings,
+                ...goPilotportalSettings
+            },
         };
     }
 
@@ -362,6 +369,24 @@ export default class App extends React.Component {
 
             this.setupFirstPromoter({site, member});
             return {site, member};
+        } catch (e) {
+            if (hasMode(['dev', 'test'])) {
+                return {};
+            }
+            throw e;
+        }
+    }
+
+    /** Fetch portal data with GoPilot Apis  */
+    async fetchGoPilotApiData() {
+        try {
+            //const siteUrl = 'http://dev.gopilot.net:3000/test/getSiteDetails';
+            //console.log(siteUrl);
+            //this.GoPilotApi = setupGoPilotApi({siteUrl});
+            this.GoPilotApi = setupGoPilotApi({});
+            const {portalSettings} = await this.GoPilotApi.init();
+
+            return {portalSettings};
         } catch (e) {
             if (hasMode(['dev', 'test'])) {
                 return {};
@@ -566,10 +591,11 @@ export default class App extends React.Component {
 
     /**Get final App level context from App state*/
     getContextFromState() {
-        const {site, member, action, page, lastPage, showPopup, pageQuery, popupNotification, customSiteUrl} = this.state;
+        const {portalSettings, site, member, action, page, lastPage, showPopup, pageQuery, popupNotification, customSiteUrl} = this.state;
         const contextPage = this.getContextPage({site, page, member});
         const contextMember = this.getContextMember({page: contextPage, member});
         return {
+            portalSettings,
             site,
             action,
             brandColor: this.getAccentColor(),
