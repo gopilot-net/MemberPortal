@@ -17,7 +17,7 @@ function setupGoPilotApi({siteUrl = process.env.REACT_APP_GOPILOT_API_SITE_URL})
 
     function endpointFor({type, resource}) {
         if (type === 'members') {
-            return `${siteUrl.replace(/\/$/, '')}/${apiPath}/${resource}/`;
+            return `${siteUrl.replace(/\/$/, '')}/${apiPath}/${resource}/${window.applicationId}`;
         }
     }
 
@@ -55,6 +55,7 @@ function setupGoPilotApi({siteUrl = process.env.REACT_APP_GOPILOT_API_SITE_URL})
         const [{portalSettings}] = await Promise.all([
             api.settings.read()
         ]);
+        //console.log(portalSettings);
         return {portalSettings};
     };
 

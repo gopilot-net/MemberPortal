@@ -1,7 +1,8 @@
 import React, {Component} from 'react';
 import InputField from './InputField';
+import AppContext from '../../AppContext';
 
-const FormInput = ({field, onChange, onBlur = () => { }, onKeyDown = () => {}}) => {
+const FormInput = ({portalFields, field, onChange, onBlur = () => { }, onKeyDown = () => {}}) => {
     if (!field) {
         return null;
     }
@@ -9,10 +10,10 @@ const FormInput = ({field, onChange, onBlur = () => { }, onKeyDown = () => {}}) 
         <>
             <InputField
                 key={field.name}
-                label = {field.label}
+                label = { portalFields[field.name]['label'] ?  portalFields[field.name]['label'] : field.label}
                 type={field.type}
                 name={field.name}
-                placeholder={field.placeholder}
+                placeholder={portalFields[field.name]['placeholder'] ?  portalFields[field.name]['placeholder'] : field.placeholder}
                 value={field.value}
                 onKeyDown={onKeyDown}
                 onChange={e => onChange(e, field)}
@@ -26,6 +27,7 @@ const FormInput = ({field, onChange, onBlur = () => { }, onKeyDown = () => {}}) 
 };
 
 class InputForm extends Component {
+    static contextType = AppContext;
     constructor(props) {
         super(props);
         this.state = { };
@@ -33,8 +35,10 @@ class InputForm extends Component {
 
     render() {
         const {fields, onChange, onBlur, onKeyDown} = this.props;
+        const {portalSettings} = this.context;
+        const portalFields=portalSettings.fields;
         const inputFields = fields.map((field) => {
-            return <FormInput field={field} key={field.name} onChange={onChange} onBlur={onBlur} onKeyDown={onKeyDown} />;
+            return <FormInput portalFields={portalFields} field={field} key={field.name} onChange={onChange} onBlur={onBlur} onKeyDown={onKeyDown} />;
         });
         return (
             <>

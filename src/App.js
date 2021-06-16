@@ -194,7 +194,7 @@ export default class App extends React.Component {
             portalSettings: {
                 ...restDevData.portalSettings,
                 ...goPilotportalSettings
-            },
+            }
         };
     }
 
