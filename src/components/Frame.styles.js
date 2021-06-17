@@ -236,7 +236,35 @@ const FrameStyles = `
     }
 
     .gh-portal-popup-wrapper.fullscreen {
+        margin: 32px;
+        height: calc(100vh - 64px) !important;
+        overflow-y: scroll;
+        background: #fff;
+        box-shadow: 0 3.8px 2.2px rgba(0, 0, 0, 0.028), 0 9.2px 5.3px rgba(0, 0, 0, 0.04), 0 17.3px 10px rgba(0, 0, 0, 0.05), 0 30.8px 17.9px rgba(0, 0, 0, 0.06), 0 57.7px 33.4px rgba(0, 0, 0, 0.072), 0 138px 80px rgba(0, 0, 0, 0.1);
         padding: 0;
+        border-radius: 5px;
+    }
+
+    @media (max-width: 960px) {
+        .gh-portal-popup-wrapper.fullscreen {
+            margin: 20px;
+            height: calc(100vh - 40px) !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .gh-portal-popup-wrapper.fullscreen {
+            margin: 0;
+            height: 100vh !important;
+            border-radius: 0px;
+            box-shadow: none;
+        }
+    }
+
+    @media (min-width: 480px) {
+        .gh-portal-popup-wrapper.fullscreen.preview {
+            height: calc(100vh - 150px) !important;
+        }
     }
 
     .gh-portal-popup-container {
@@ -260,14 +288,20 @@ const FrameStyles = `
         z-index: 9999;
     }
 
-    .gh-portal-popup-container.fullscreen {
+    .gh-portal-popup-wrapper.fullscreen .gh-portal-popup-container {
+        position: unset;
         align-items: center;
         width: 100% !important;
-        height: 100% !important;
-        border-radius: 0px;
         box-shadow: none !important;
-        overflow-y: scroll;
-        padding-bottom: 6vmin;
+        border-radius: 0px;
+        animation: fadein 0.35s ease-in-out;
+        padding: 3vmin 0;
+    }
+
+    @media (max-width: 480px) {
+        .gh-portal-popup-wrapper.fullscreen .gh-portal-popup-container.preview {
+            max-height: 640px;
+        }
     }
 
     @keyframes popup {
@@ -288,7 +322,7 @@ const FrameStyles = `
         bottom: 24px;
         left: 24px;
     }
-    
+
     .gh-portal-powered a {
         border: none;
         display: block;
@@ -302,8 +336,8 @@ const FrameStyles = `
 
     @keyframes powered-fade-in {
         0% {
-            transform: scale(0.98); 
-            opacity: 0; 
+            transform: scale(0.98);
+            opacity: 0;
         }
         75% {
             opacity: 1.0;
@@ -320,7 +354,19 @@ const FrameStyles = `
     }
 
     .gh-portal-popup-wrapper.fullscreen .gh-portal-powered {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        bottom: unset;
+        left: unset;
+        width: 100%;
         z-index: 10000;
+        padding-bottom: 32px;
+    }
+
+    .gh-portal-popup-wrapper.fullscreen.signin .gh-portal-powered {
+        position: absolute;
+        bottom: 0;
     }
 
     .gh-portal-container-wide {
@@ -343,8 +389,8 @@ const FrameStyles = `
         animation: none;
     }
 
-    /* Sets the main content area of the popup scrollable. 
-    /* 12vw is the sum horizontal padding of the popup container 
+    /* Sets the main content area of the popup scrollable.
+    /* 12vw is the sum horizontal padding of the popup container
     */
     .gh-portal-content {
         position: relative;
@@ -370,11 +416,12 @@ const FrameStyles = `
         scrollbar-width: none;  /* Firefox */
     }
 
-    .gh-portal-popup-container.fullscreen .gh-portal-content {
+    .gh-portal-popup-wrapper.fullscreen .gh-portal-content {
+        position: unset;
         overflow-y: visible;
         max-height: unset !important;
     }
-    
+
     .gh-portal-popup-container footer {
         padding: 0 32px 32px;
         height: 72px;
@@ -387,6 +434,19 @@ const FrameStyles = `
         z-index: 999;
     }
 
+    @media (min-width: 480px) {
+        .gh-portal-popup-wrapper.fullscreen .gh-portal-closeicon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .gh-portal-popup-wrapper.fullscreen .gh-portal-closeicon-container {
+            top: 48px;
+            right: 48px;
+            position: fixed;
+        }
+    }
+
     .gh-portal-closeicon {
         color: var(--grey9);
         cursor: pointer;
@@ -394,11 +454,6 @@ const FrameStyles = `
         height: 16px;
         padding: 12px;
         transition: all 0.2s ease-in-out;
-    }
-
-    .gh-portal-popup-container.fullscreen .gh-portal-closeicon {
-        width: 24px;
-        height: 24px;
     }
 
     .gh-portal-closeicon:hover {
@@ -599,7 +654,7 @@ const FrameStyles = `
     .pt8 { padding-top: 32px; }
     .pt9 { padding-top: 36px; }
     .pt10 { padding-top: 40px; }
-    
+
     .pr1 { padding-right: 4px; }
     .pr2 { padding-right: 8px; }
     .pr3 { padding-right: 12px; }
@@ -610,7 +665,7 @@ const FrameStyles = `
     .pr8 { padding-right: 32px; }
     .pr9 { padding-right: 36px; }
     .pr10 { padding-right: 40px; }
-    
+
     .pb1 { padding-bottom: 4px; }
     .pb2 { padding-bottom: 8px; }
     .pb3 { padding-bottom: 12px; }
@@ -621,7 +676,7 @@ const FrameStyles = `
     .pb8 { padding-bottom: 32px; }
     .pb9 { padding-bottom: 36px; }
     .pb10 { padding-bottom: 40px; }
-    
+
     .pl1 { padding-left: 4px; }
     .pl2 { padding-left: 8px; }
     .pl3 { padding-left: 12px; }
@@ -647,7 +702,7 @@ const MobileStyles = `
         justify-content: space-between;
         background: var(--white);
     }
-    
+
     .gh-portal-popup-container {
         width: 100%;
         border-radius: 0;
@@ -667,9 +722,18 @@ const MobileStyles = `
         height: unset;
     }
 
+    .gh-portal-popup-wrapper {
+        overflow-y: unset;
+    }
+
     .gh-portal-content {
+        position: relative !important;
         overflow-y: auto !important;
         max-height: unset !important;
+    }
+
+    .gh-portal-popup-wrapper.fullscreen:not(.preview) .gh-portal-content {
+        max-height: calc(100vh - 180px) !important;
     }
 
     .gh-portal-powered {
@@ -705,9 +769,15 @@ const MobileStyles = `
     .gh-portal-popup-wrapper.account-home .gh-portal-powered a {
         box-shadow: none;
     }
-    
-    .gh-portal-popup-container.fullscreen {
+
+    .gh-portal-popup-wrapper.fullscreen .gh-portal-popup-container {
         padding: 0;
+    }
+
+    .gh-portal-popup-wrapper.fullscreen .gh-portal-powered {
+        padding-bottom: 0;
+        padding-top: 0;
+        margin-top: -8px;
     }
 }
 
@@ -827,6 +897,7 @@ const MobileStyles = `
 }
 `;
 
+<<<<<<< HEAD
 // Append all styles as string which we want to pass to iframe
 const FrameStyle =
     GlobalStyles +
@@ -848,3 +919,25 @@ const FrameStyle =
     GoPilotStyles;
 
 export default FrameStyle;
+=======
+export function getFrameStyles({site}) {
+    const FrameStyle =
+        GlobalStyles +
+        FrameStyles +
+        AccountHomePageStyles +
+        AccountPlanPageStyles +
+        InputFieldStyles +
+        PlanSectionStyles +
+        ProductsSectionStyles({site}) +
+        SwitchStyles +
+        ActionButtonStyles +
+        BackButtonStyles +
+        AvatarStyles +
+        MagicLinkStyles +
+        LinkPageStyles +
+        SignupPageStyles +
+        PopupNotificationStyles +
+        MobileStyles;
+    return FrameStyle;
+}
+>>>>>>> fc4155de22539605b73b8aa77318ea3cb7ee879e

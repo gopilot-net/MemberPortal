@@ -51,7 +51,7 @@ function printBuildSuccessDetails() {
         return;
     }
     if ((stdOutChunks && stdOutChunks.length > 0)) {
-        const detail = Buffer.from(stdOutChunks[stdOutChunks.length - 1]).toString();
+        const detail = Buffer.concat(stdOutChunks.slice(4,7)).toString();
         log();
         log(chalk.dim(detail));
     }
@@ -91,7 +91,7 @@ function printBuildComplete(code) {
 function printConfigInstruction() {
     const data = {
         portal: {
-            url: `http://localhost:${port}/umd/portal.min.js`
+            url: `http://localhost:${port}/portal`
         }
     };
     const stringifedData = JSON.stringify(data, null, 2);
@@ -189,7 +189,21 @@ function watchFiles() {
 
 function startDevServer() {
     const server = http.createServer((request, response) => {
-        return handler(request, response);
+        return handler(request, response, {
+            rewrites: [
+                {source: '/portal', destination: 'umd/portal.min.js'},
+                {source: '/portal.min.js.map', destination: 'umd/portal.min.js.map'}
+            ],
+            headers: [
+                {
+                    source: '**',
+                    headers: [{
+                        key: 'Cache-Control',
+                        value: 'no-cache'
+                    }]
+                }
+            ]
+        });
     });
 
     server.listen(port, () => {
