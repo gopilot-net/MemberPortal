@@ -1,7 +1,7 @@
 import Frame from './Frame';
 import {hasMode} from '../utils/check-mode';
 import AppContext from '../AppContext';
-import FrameStyle from './Frame.styles';
+import {getFrameStyles} from './Frame.styles';
 import Pages, {getActivePage} from '../pages';
 import PopupNotification from './common/PopupNotification';
 import {hasMultipleProducts, isCookiesDisabled, getSitePrices, isInviteOnlySite} from '../utils/helpers';
@@ -165,11 +165,15 @@ class PopupContent extends React.Component {
             pageClass = page;
             break;
         }
-        
+
         if (hasMultipleProducts({site}) && (page === 'signup' || page === 'signin')) {
             pageClass += ' fullscreen';
         }
-        
+
+        if (hasMode(['preview'])) {
+            pageClass += ' preview';
+        }
+
         const className = (hasMode(['preview', 'dev'], {customSiteUrl}) && !site.disableBackground) ? 'gh-portal-popup-container preview' : 'gh-portal-popup-container';
         const containerClassName = `${className} ${popupWidthStyle} ${pageClass}`;
         return (
@@ -221,6 +225,8 @@ export default class PopupModal extends React.Component {
     }
 
     renderFrameStyles() {
+        const {site} = this.context;
+        const FrameStyle = getFrameStyles({site});
         const styles = `
             :root {
                 --brandcolor: ${this.context.brandColor}

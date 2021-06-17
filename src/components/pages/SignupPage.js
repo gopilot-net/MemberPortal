@@ -5,7 +5,7 @@ import PlansSection from '../common/PlansSection';
 import ProductsSection from '../common/ProductsSection';
 import InputForm from '../common/InputForm';
 import {ValidateInputForm} from '../../utils/form';
-import {getSitePrices, hasMultipleProducts, hasOnlyFreePlan, isInviteOnlySite} from '../../utils/helpers';
+import {getAllProducts, getSitePrices, hasMultipleProducts, hasOnlyFreePlan, isInviteOnlySite} from '../../utils/helpers';
 import {ReactComponent as InvitationIcon} from '../../images/icons/invitation.svg';
 
 const React = require('react');
@@ -35,6 +35,10 @@ export const SignupPageStyles = `
         margin-top: 12px;
     }
 
+    .gh-portal-popup-wrapper.fullscreen .gh-portal-signin-header {
+        padding-top: 18vmin;
+    }
+
     .gh-portal-signup-logo + .gh-portal-main-title {
         margin: 4px 0 0;
     }
@@ -52,12 +56,8 @@ export const SignupPageStyles = `
         margin-bottom: 0;
     }
 
-    .gh-portal-popup-container.fullscreen .gh-portal-signup-header {
-        margin-top: 6vmin;
-    }
-
-    .gh-portal-popup-container.fullscreen .gh-portal-signin-header {
-        margin-top: 22vmin;
+    .gh-portal-popup-wrapper.signin.fullscreen .gh-portal-popup-container {
+        padding-bottom: 3vmin;
     }
 
     .gh-portal-signup-message {
@@ -92,12 +92,12 @@ export const SignupPageStyles = `
         background-attachment: local,local,scroll,scroll;
     }
 
-    .gh-portal-popup-container.fullscreen .gh-portal-content.signup,
-    .gh-portal-popup-container.fullscreen .gh-portal-content.signin {
+    .gh-portal-popup-wrapper.fullscreen .gh-portal-content.signup,
+    .gh-portal-popup-wrapper.fullscreen .gh-portal-content.signin {
         width: 100%;
     }
 
-    .gh-portal-popup-container.fullscreen .gh-portal-input-section {
+    .gh-portal-popup-wrapper.fullscreen .gh-portal-input-section {
         max-width: 420px;
         margin: 0 auto;
     }
@@ -112,14 +112,23 @@ export const SignupPageStyles = `
         height: 132px;
     }
 
-    .gh-portal-popup-container.fullscreen footer.gh-portal-signup-footer,
-    .gh-portal-popup-container.fullscreen footer.gh-portal-signin-footer {
-        padding: 0;
+    .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signup-footer,
+    .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signin-footer {
         width: 100%;
         max-width: 420px;
+        height: unset;
+        padding: 0 !important;
+        margin: 24px 32px;
     }
 
-    .gh-portal-popup-container.fullscreen footer.gh-portal-signin-footer {
+    @media (max-width: 480px) {
+        .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signup-footer,
+        .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signin-footer {
+            padding: 0 24px !important;
+        }
+    }
+
+    .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signin-footer {
         padding-top: 24px;
     }
 
@@ -253,8 +262,8 @@ class SignupPage extends React.Component {
         });
     }
 
-    handleSelectPlan(e, priceId) {
-        e.preventDefault();
+    handleSelectPlan = (e, priceId) => {
+        e && e.preventDefault();
         // Hack: React checkbox gets out of sync with dom state with instant update
         this.timeoutId = setTimeout(() => {
             this.setState((prevState) => {
@@ -381,9 +390,14 @@ class SignupPage extends React.Component {
     }
 
     renderProducts() {
+        const {site} = this.context;
+        const products = getAllProducts({site});
         return (
             <>
-                <ProductsSection />
+                <ProductsSection
+                    products={products}
+                    onPlanSelect={this.handleSelectPlan}
+                />
             </>
         );
     }
@@ -404,6 +418,15 @@ class SignupPage extends React.Component {
         );
     }
 
+    renderProductsOrPlans() {
+        const {site} = this.context;
+        if (hasMultipleProducts({site})) {
+            return this.renderProducts();
+        } else {
+            return this.renderPlans();
+        }
+    }
+
     renderForm() {
         const fields = this.getInputFields({state: this.state});
         const {site, pageQuery} = this.context;
@@ -418,33 +441,18 @@ class SignupPage extends React.Component {
             );
         }
 
-        if (hasMultipleProducts({site})) {
-            return (
-                <section>
-                    <div className='gh-portal-section'>
-                        <InputForm
-                            fields={fields}
-                            onChange={(e, field) => this.handleInputChange(e, field)}
-                            onKeyDown={(e, field) => this.onKeyDown(e, field)}
-                        />
-                        {this.renderProducts()}
-                    </div>
-                </section>
-            );
-        } else {
-            return (
-                <section>
-                    <div className='gh-portal-section'>
-                        <InputForm
-                            fields={fields}
-                            onChange={(e, field) => this.handleInputChange(e, field)}
-                            onKeyDown={(e, field) => this.onKeyDown(e, field)}
-                        />
-                        {this.renderPlans()}
-                    </div>
-                </section>
-            );
-        }
+        return (
+            <section>
+                <div className='gh-portal-section'>
+                    <InputForm
+                        fields={fields}
+                        onChange={(e, field) => this.handleInputChange(e, field)}
+                        onKeyDown={e => this.onKeyDown(e)}
+                    />
+                    {this.renderProductsOrPlans()}
+                </div>
+            </section>
+        );
     }
 
     renderSiteLogo() {

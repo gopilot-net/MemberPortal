@@ -141,14 +141,45 @@ export function hasMultipleProducts({site = {}}) {
     const {
         products = []
     } = site || {};
-    if (products?.length > 0) {
+    if (site.portal_plans && !site.portal_plans.includes('monthly') && !site.portal_plans.includes('yearly')) {
+        return false;
+    }
+    if (site.portal_products && site.portal_products.length < 2) {
+        return false;
+    }
+    if (products?.length > 1) {
         return true;
     }
     return false;
 }
 
-export function getProducts({site = {}}) {
-    return site?.products || [];
+export function getSiteProducts({site = {}}) {
+    const products = site?.products || [];
+    return products.filter(product => !!product).sort((productA, productB) => {
+        return productA?.monthlyPrice?.amount - productB?.monthlyPrice.amount;
+    });
+}
+
+export function getAllProducts({site}) {
+    const products = getSiteProducts({site});
+    if (hasFreeProduct({site})) {
+        products.unshift({
+            id: 'free'
+        });
+    }
+    return products;
+}
+
+export function getProductPrices({site}) {
+    const products = getSiteProducts({site}) || [];
+    const prices = products.reduce((accumPrices, product) => {
+        if (product.monthlyPrice && product.yearlyPrice) {
+            accumPrices.push(product.monthlyPrice);
+            accumPrices.push(product.yearlyPrice);
+        }
+        return accumPrices;
+    }, []);
+    return prices;
 }
 
 export function getAvailablePrices({site = {}, includeFree = true} = {}) {
@@ -207,6 +238,14 @@ export function getAvailablePrices({site = {}, includeFree = true} = {}) {
     return plansData;
 }
 
+export function hasFreeProduct({site}) {
+    const {
+        allow_self_signup: allowSelfSignup,
+        portal_plans: portalPlans
+    } = site || {};
+    return allowSelfSignup && portalPlans.includes('free');
+}
+
 export function getSitePrices({site = {}, includeFree = true, pageQuery = ''} = {}) {
     const {
         prices = [],
@@ -218,10 +257,14 @@ export function getSitePrices({site = {}, includeFree = true, pageQuery = ''} = 
     if (!prices) {
         return [];
     }
+    let availablePrices = prices;
+    if (hasMultipleProducts({site})) {
+        availablePrices = getProductPrices({site});
+    }
 
     const plansData = [];
 
-    const stripePrices = prices.filter((d) => {
+    const stripePrices = availablePrices.filter((d) => {
         return !!(d && d.id);
     }).map((d) => {
         return {
@@ -314,6 +357,19 @@ export const getSiteDomain = ({site}) => {
 
 export const getCurrencySymbol = (currency) => {
     return Intl.NumberFormat('en', {currency, style: 'currency'}).format(0).replace(/[\d\s.]/g, '');
+};
+
+export const getStripeAmount = (amount) => {
+    if (isNaN(amount)) {
+        return 0;
+    }
+    return (amount / 100);
+};
+
+export const getPriceString = (price = {}) => {
+    const symbol = getCurrencySymbol(price.currency);
+    const amount = getStripeAmount(price.amount);
+    return `${symbol}${amount}/${price.interval}`;
 };
 
 export const formatNumber = (amount) => {

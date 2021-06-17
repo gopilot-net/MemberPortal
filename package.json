@@ -1,6 +1,6 @@
 {
   "name": "@tryghost/portal",
-  "version": "1.5.3",
+  "version": "1.6.2",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -23,25 +23,27 @@
     "@testing-library/user-event": "12.8.3",
     "env-cmd": "^10.1.0",
     "prop-types": "15.7.2",
-    "react": "16.14.0",
-    "react-dom": "16.14.0",
-    "react-scripts": "3.4.4"
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "react-scripts": "4.0.3"
   },
   "scripts": {
-    "start": "env-cmd -f .env.local react-scripts start",
+    "start": "BROWSER=none env-cmd -f .env.local react-scripts start",
+    "start:combined": "BROWSER=none node ./scripts/start-combined.js",
     "start:dev": "node ./scripts/start-mode.js",
-    "build:dev": "env-cmd -f .env.dev npm run build:combined && env-cmd -f .env.dev npm run build:bundle",
-    "build": "npm run build:combined && npm run build:bundle",
+    "dev": "node ./scripts/dev-mode.js",
+    "build:dev": "env-cmd -f .env.dev npm run build:combined ",
+    "build": "npm run build:combined",
+    "build:original": "react-scripts build",
     "build:combined": "node ./scripts/build-combined.js",
     "build:bundle": "webpack --config webpack.config.js",
-    "dev": "node ./scripts/dev-mode.js",
-    "test": "react-scripts test --env=jsdom-fourteen",
+    "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js --cache",
     "preship": "yarn lint",
     "ship": "STATUS=$(git status --porcelain); echo $STATUS; if [ -z \"$STATUS\" ]; then yarn publish && git push ${GHOST_UPSTREAM:-upstream} main --follow-tags; fi",
     "posttest": "yarn lint",
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
+    "analyze": "source-map-explorer 'umd/*.js'",
     "prepublishOnly": "yarn build"
   },
   "eslintConfig": {
@@ -68,6 +70,7 @@
   "devDependencies": {
     "chalk": "^4.1.1",
     "chokidar": "^3.5.1",
+    "copy-webpack-plugin": "^6.3.2",
     "eslint-plugin-ghost": "2.2.0",
     "minimist": "^1.2.5",
     "ora": "^5.4.0",
