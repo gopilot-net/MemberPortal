@@ -897,29 +897,6 @@ const MobileStyles = `
 }
 `;
 
-<<<<<<< HEAD
-// Append all styles as string which we want to pass to iframe
-const FrameStyle =
-    GlobalStyles +
-    FrameStyles +
-    AccountHomePageStyles +
-    AccountPlanPageStyles +
-    InputFieldStyles +
-    PlanSectionStyles +
-    ProductsSectionStyles +
-    SwitchStyles +
-    ActionButtonStyles +
-    BackButtonStyles +
-    AvatarStyles +
-    MagicLinkStyles +
-    LinkPageStyles +
-    SignupPageStyles +
-    PopupNotificationStyles +
-    MobileStyles +
-    GoPilotStyles;
-
-export default FrameStyle;
-=======
 export function getFrameStyles({site}) {
     const FrameStyle =
         GlobalStyles +
@@ -940,4 +917,3 @@ export function getFrameStyles({site}) {
         MobileStyles;
     return FrameStyle;
 }
->>>>>>> fc4155de22539605b73b8aa77318ea3cb7ee879e
