@@ -10,10 +10,10 @@ const FormInput = ({portalFields, field, onChange, onBlur = () => { }, onKeyDown
         <>
             <InputField
                 key={field.name}
-                label = { portalFields[field.name]['label'] ?  portalFields[field.name]['label'] : field.label}
+                label = { portalFields[field.name].label ? portalFields[field.name].label : field.label}
                 type={field.type}
                 name={field.name}
-                placeholder={portalFields[field.name]['placeholder'] ?  portalFields[field.name]['placeholder'] : field.placeholder}
+                placeholder = {portalFields[field.name].placeholder ? portalFields[field.name].placeholder : field.placeholder}
                 value={field.value}
                 onKeyDown={onKeyDown}
                 onChange={e => onChange(e, field)}
@@ -36,7 +36,7 @@ class InputForm extends Component {
     render() {
         const {fields, onChange, onBlur, onKeyDown} = this.props;
         const {portalSettings} = this.context;
-        const portalFields=portalSettings.fields;
+        const portalFields = portalSettings.fields;
         const inputFields = fields.map((field) => {
             return <FormInput portalFields={portalFields} field={field} key={field.name} onChange={onChange} onBlur={onBlur} onKeyDown={onKeyDown} />;
         });

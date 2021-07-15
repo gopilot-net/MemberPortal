@@ -1,3 +1,4 @@
+/* eslint-disable */
 import ActionButton from '../common/ActionButton';
 import CloseButton from '../common/CloseButton';
 import AppContext from '../../AppContext';
@@ -29,7 +30,7 @@ export default class SigninPage extends React.Component {
         e.preventDefault();
         this.setState((state) => {
             return {
-                errors: ValidateInputForm({fields: this.getInputFields({state})})
+                errors: ValidateInputForm({fields: this.getInputFields({state}), portalSettings:this.context.portalSettings})
             };
         }, () => {
             const {email, errors} = this.state;
@@ -72,13 +73,16 @@ export default class SigninPage extends React.Component {
     }
 
     renderSubmitButton() {
-        const {action} = this.context;
+        const {action, portalSettings} = this.context;
+        const buttonLabels = portalSettings.fields.buttonLabels;
         let retry = false;
         const isRunning = (action === 'signin:running');
-        let label = isRunning ? 'Sending login link...' : 'Continue';
+        //let label = isRunning ? 'Sending login link...' : 'Continue';
+        let label = isRunning ? buttonLabels.sendingLoginLink : buttonLabels.continue;
         const disabled = isRunning ? true : false;
         if (action === 'signin:failed') {
-            label = 'Retry';
+            //label = 'Retry';
+            label = buttonLabels.sendingLoginLink;
             retry = true;
         }
         return (
@@ -96,15 +100,17 @@ export default class SigninPage extends React.Component {
 
     renderSignupMessage() {
         const brandColor = this.context.brandColor;
+        const footerLabels = this.context.portalSettings.fields.footerLabels;
         return (
             <div className='gh-portal-signup-message'>
-                <div>Don't have an account?</div>
-                <button className='gh-portal-btn gh-portal-btn-link' style={{color: brandColor}} onClick={() => this.context.onAction('switchPage', {page: 'signup'})}><span>Sign up</span></button>
+                <div>{footerLabels.dontHaveAccount}</div>
+                <button className='gh-portal-btn gh-portal-btn-link' style={{color: brandColor}} onClick={() => this.context.onAction('switchPage', {page: 'signup'})}><span>{footerLabels.signup}</span></button>
             </div>
         );
     }
 
     renderForm() {
+        
         return (
             <section>
                 <div className='gh-portal-section'>
@@ -138,7 +144,7 @@ export default class SigninPage extends React.Component {
         return (
             <header className='gh-portal-signin-header'>
                 {this.renderSiteLogo()}
-                <h2 className="gh-portal-main-title">Log in to {siteTitle}</h2>
+                <h2 className="gh-portal-main-title">{this.context.portalSettings.fields.loginLabels.loginTo} {siteTitle}</h2>
             </header>
         );
     }

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, {useContext} from 'react';
 import AppContext from '../../AppContext';
 import calculateDiscount from '../../utils/discount';
@@ -383,7 +384,8 @@ function addDiscountToPlans(plans) {
 }
 
 function PlanOptions({plans, selectedPlan, onPlanSelect, changePlan}) {
-    const {site} = useContext(AppContext);
+    const {site,portalSettings} = useContext(AppContext);
+    //console.log(portalSettings);
     const {free_price_name: freePriceName, free_price_description: freePriceDescription} = site;
     addDiscountToPlans(plans);
     return plans.map(({name, currency_symbol: currencySymbol, amount, description, interval, id}) => {
@@ -404,7 +406,12 @@ function PlanOptions({plans, selectedPlan, onPlanSelect, changePlan}) {
         }
 
         const planNameClass = planDetails.feature ? 'gh-portal-plan-name' : 'gh-portal-plan-name no-description';
-
+        
+        // substitute plan name and desc
+        //console.log(planDetails.feature);
+        displayName = (portalSettings.fields.terms[name].label)? portalSettings.fields.terms[name].label : displayName
+        planDetails.feature = (portalSettings.fields.terms[name].desc) ? portalSettings.fields.terms[name].desc : planDetails.feature;
+        
         return (
             <div className={classes} key={id} onClick={e => onPlanSelect(e, id)}>
                 <Checkbox name={name} id={id} isChecked={isChecked} onPlanSelect={onPlanSelect} />
@@ -422,11 +429,12 @@ function PlanOptions({plans, selectedPlan, onPlanSelect, changePlan}) {
 }
 
 function PlanLabel({showLabel}) {
+     const {portalSettings} = useContext(AppContext);
     if (!showLabel) {
         return null;
     }
     return (
-        <label className='gh-portal-input-label'>Plan</label>
+        <label className='gh-portal-input-label'>{(portalSettings.fields.planLabel) ? portalSettings.fields.planLabel: 'Plan'}</label>
     );
 }
 

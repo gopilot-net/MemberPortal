@@ -109,17 +109,18 @@ const UserAvatar = ({avatar, brandColor}) => {
 };
 
 const AccountFooter = ({onClose, handleSignout, supportAddress = ''}) => {
+    const {portalSettings} = useContext(AppContext);
     const supportAddressMail = `mailto:${supportAddress}`;
     return (
         <footer className='gh-portal-account-footer'>
             <ul className='gh-portal-account-footermenu'>
-                <li><button className='gh-portal-btn' name='logout' aria-label='logout' onClick={e => handleSignout(e)}>Sign out</button></li>
+                <li><button className='gh-portal-btn' name='logout' aria-label='logout' onClick={e => handleSignout(e)}>{portalSettings.fields.accountLabels.signOut}</button></li>
             </ul>
             <div className='gh-portal-account-footerright'>
                 <ul className='gh-portal-account-footermenu'>
                     <li><a className='gh-portal-btn gh-portal-btn-branded' href={supportAddressMail} onClick={() => {
                         supportAddressMail && window.open(supportAddressMail);
-                    }}>Contact support</a></li>
+                    }}>{portalSettings.fields.accountLabels.contactSupport}</a></li>
                 </ul>
             </div>
         </footer>
@@ -127,12 +128,12 @@ const AccountFooter = ({onClose, handleSignout, supportAddress = ''}) => {
 };
 
 const UserHeader = () => {
-    const {member, brandColor} = useContext(AppContext);
+    const {member, brandColor, portalSettings} = useContext(AppContext);
     const avatar = member.avatar_image;
     return (
         <header className='gh-portal-account-header'>
             <UserAvatar avatar={avatar} brandColor={brandColor} />
-            <h2 className="gh-portal-main-title">Your account</h2>
+            <h2 className="gh-portal-main-title">{portalSettings.fields.accountLabels.yourAccount}</h2>
         </header>
     );
 };
@@ -159,7 +160,7 @@ const PaidAccountActions = () => {
         const {amount = 0, currency, interval} = price;
         let label = `${Intl.NumberFormat('en', {currency, style: 'currency'}).format(amount / 100)}/${interval}`;
         if (isComplimentary) {
-            label = `Complimentary (${label})`;
+            label = `${portalSettings.fields.terms.Complimentary.label} (${label})`;
         }
         return (
             <p>
@@ -169,11 +170,12 @@ const PaidAccountActions = () => {
     };
 
     const PlanUpdateButton = ({isComplimentary}) => {
+        const {portalSettings} = useContext(AppContext);
         if (isComplimentary || hasOnlyFreePlan({site})) {
             return null;
         }
         return (
-            <button className='gh-portal-btn gh-portal-btn-list' onClick={e => openUpdatePlan(e)}>Change</button>
+            <button className='gh-portal-btn gh-portal-btn-list' onClick={e => openUpdatePlan(e)}>{portalSettings.fields.accountLabels.change}</button>
         );
     };
 
@@ -190,10 +192,10 @@ const PaidAccountActions = () => {
     };
 
     const BillingSection = ({defaultCardLast4, isComplimentary}) => {
-        const {action} = useContext(AppContext);
+        const {action, portalSettings} = useContext(AppContext);
         const label = action === 'editBilling:running' ? (
             <LoaderIcon className='gh-portal-billing-button-loader' />
-        ) : 'Update';
+        ) : portalSettings.fields.accountLabels.update;
         if (isComplimentary) {
             return null;
         }
@@ -201,7 +203,7 @@ const PaidAccountActions = () => {
         return (
             <section>
                 <div className='gh-portal-list-detail'>
-                    <h3>Billing info</h3>
+                    <h3>{portalSettings.fields.accountLabels.billingInfo}</h3>
                     <CardLabel defaultCardLast4={defaultCardLast4} />
                 </div>
                 <button className='gh-portal-btn gh-portal-btn-list' onClick={e => onEditBilling(e)}>{label}</button>
@@ -210,6 +212,7 @@ const PaidAccountActions = () => {
     };
 
     const subscription = getMemberSubscription({member});
+    const {portalSettings} = useContext(AppContext);
     if (subscription) {
         let isComplimentary = isComplimentaryMember({member});
         const {
@@ -221,7 +224,7 @@ const PaidAccountActions = () => {
             <>
                 <section>
                     <div className='gh-portal-list-detail'>
-                        <h3>Plan</h3>
+                        <h3>{portalSettings.fields.planLabel}</h3>
                         <PlanLabel plan={plan} price={price} isComplimentary={isComplimentary} />
                     </div>
                     <PlanUpdateButton isComplimentary={isComplimentary} />
@@ -234,7 +237,7 @@ const PaidAccountActions = () => {
 };
 
 const AccountActions = () => {
-    const {member, onAction} = useContext(AppContext);
+    const {member, onAction, portalSettings} = useContext(AppContext);
     const {name, email, subscribed} = member;
 
     const openEditProfile = () => {
@@ -249,7 +252,7 @@ const AccountActions = () => {
         onAction('updateNewsletter', {subscribed: !sub});
     };
 
-    let label = subscribed ? 'Subscribed' : 'Unsubscribed';
+    let label = subscribed ? portalSettings.fields.accountLabels.subscribed : portalSettings.fields.accountProfileLabels.unsubscribed;
     return (
         <div>
             <div className='gh-portal-list'>
@@ -258,14 +261,14 @@ const AccountActions = () => {
                         <h3>{(name ? name : 'Account')}</h3>
                         <p>{email}</p>
                     </div>
-                    <button className='gh-portal-btn gh-portal-btn-list' onClick={e => openEditProfile(e)}>Edit</button>
+                    <button className='gh-portal-btn gh-portal-btn-list' onClick={e => openEditProfile(e)}>{portalSettings.fields.accountLabels.edit}</button>
                 </section>
 
                 <PaidAccountActions />
 
                 <section>
                     <div className='gh-portal-list-detail'>
-                        <h3>Email newsletter</h3>
+                        <h3>{portalSettings.fields.accountLabels.emailNewsletter}</h3>
                         <p>{label}</p>
                     </div>
                     <div>
@@ -281,7 +284,7 @@ const AccountActions = () => {
 };
 
 const SubscribeButton = () => {
-    const {site, action, brandColor, onAction} = useContext(AppContext);
+    const {site, action, brandColor, onAction, portalSettings} = useContext(AppContext);
     const {is_stripe_configured: isStripeConfigured} = site;
 
     if (!isStripeConfigured || hasOnlyFreePlan({site})) {
@@ -298,7 +301,7 @@ const SubscribeButton = () => {
     return (
         <ActionButton
             isRunning={isRunning}
-            label="View plans"
+            label={portalSettings.fields.accountLabels.viewPlans}
             onClick={() => openPlanPage()}
             brandColor={brandColor}
             style={{width: '100%'}}
@@ -307,7 +310,7 @@ const SubscribeButton = () => {
 };
 
 const AccountWelcome = () => {
-    const {member, site} = useContext(AppContext);
+    const {member, site, portalSettings} = useContext(AppContext);
     const {is_stripe_configured: isStripeConfigured} = site;
 
     if (!isStripeConfigured) {
@@ -322,14 +325,14 @@ const AccountWelcome = () => {
         }
         return (
             <div className='gh-portal-section'>
-                <p className='gh-portal-text-center gh-portal-free-ctatext'>Your subscription will renew on {getDateString(currentPeriodEnd)}</p>
+                <p className='gh-portal-text-center gh-portal-free-ctatext'>{portalSettings.fields.accountLabels.subscriptionWillRenewOn} {getDateString(currentPeriodEnd)}</p>
             </div>
         );
     }
 
     return (
         <div className='gh-portal-section'>
-            <p className='gh-portal-text-center gh-portal-free-ctatext'>You currently have a free membership, upgrade to a paid subscription for full access.</p>
+            <p className='gh-portal-text-center gh-portal-free-ctatext'>{portalSettings.fields.accountLabels.ugradeToPaid}</p>
             <SubscribeButton />
         </div>
     );

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import ActionButton from '../common/ActionButton';
 import CloseButton from '../common/CloseButton';
 import AppContext from '../../AppContext';
@@ -239,7 +240,7 @@ class SignupPage extends React.Component {
         e.preventDefault();
         this.setState((state) => {
             return {
-                errors: ValidateInputForm({fields: this.getInputFields({state})})
+                errors: ValidateInputForm({fields: this.getInputFields({state}), portalSettings:this.context.portalSettings})
             };
         }, () => {
             const {onAction} = this.context;
@@ -336,25 +337,29 @@ class SignupPage extends React.Component {
     }
 
     renderSubmitButton() {
-        const {action, site, brandColor, pageQuery} = this.context;
+        const {action, site, brandColor, pageQuery, portalSettings} = this.context;
 
         if (isInviteOnlySite({site, pageQuery})) {
             return null;
         }
 
-        let label = 'Continue';
+        //let label = 'Continue';
+        let label = portalSettings.fields.buttonLabels.continue;
         if (hasOnlyFreePlan({site})) {
-            label = 'Sign up';
+            //label = 'Sign up';
+            label = portalSettings.fields.buttonLabels.signup;
         }
 
         let isRunning = false;
         if (action === 'signup:running') {
-            label = 'Sending...';
+            //label = 'Sending...';
+            label = portalSettings.fields.buttonLabels.signupRunning;
             isRunning = true;
         }
         let retry = false;
         if (action === 'signup:failed') {
-            label = 'Retry';
+            //label = 'Retry';
+            label = portalSettings.fields.buttonLabels.signupFailed;
             retry = true;
         }
 
@@ -403,16 +408,16 @@ class SignupPage extends React.Component {
     }
 
     renderLoginMessage() {
-        const {brandColor, onAction} = this.context;
+        const {brandColor, onAction, portalSettings} = this.context;
         return (
             <div className='gh-portal-signup-message'>
-                <div>Already a member?</div>
+                <div>{portalSettings.fields.footerLabels.alreadyMember}</div>
                 <button
                     className='gh-portal-btn gh-portal-btn-link'
                     style={{color: brandColor}}
                     onClick={() => onAction('switchPage', {page: 'signin'})}
                 >
-                    <span>Sign in</span>
+                    <span>{portalSettings.fields.footerLabels.signin}</span>
                 </button>
             </div>
         );

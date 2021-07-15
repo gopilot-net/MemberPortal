@@ -35,21 +35,22 @@ export const AccountPlanPageStyles = `
 
 const React = require('react');
 
-function getConfirmationPageTitle({confirmationType}) {
+function getConfirmationPageTitle({confirmationType, portalSettings}) {
     if (confirmationType === 'changePlan') {
-        return 'Confirm subscription';
+        return portalSettings.fields.accountProfileLabels.confirmSubscription;
     } else if (confirmationType === 'cancel') {
-        return 'Cancel subscription';
+        return portalSettings.fields.accountProfileLabels.cancelSubscription;
     } else if (confirmationType === 'subscribe') {
-        return 'Subscribe';
+        return portalSettings.fields.accountProfileLabels.subscribe;
     }
 }
 
 const Header = ({onBack, showConfirmation, confirmationType}) => {
+    const {portalSettings} = useContext(AppContext);
     const {member, brandColor, lastPage} = useContext(AppContext);
-    let title = isPaidMember({member}) ? 'Change plan' : 'Choose a plan';
+    let title = isPaidMember({member}) ? portalSettings.fields.accountProfileLabels.changePlan : portalSettings.fields.accountProfileLabels.choosePlan;
     if (showConfirmation) {
-        title = getConfirmationPageTitle({confirmationType});
+        title = getConfirmationPageTitle({confirmationType, portalSettings});
     }
     return (
         <header className='gh-portal-detail-header'>
@@ -60,6 +61,7 @@ const Header = ({onBack, showConfirmation, confirmationType}) => {
 };
 
 const CancelSubscriptionButton = ({member, onCancelSubscription, action, brandColor}) => {
+    const {portalSettings} = useContext(AppContext);
     if (!member.paid) {
         return null;
     }
@@ -72,7 +74,7 @@ const CancelSubscriptionButton = ({member, onCancelSubscription, action, brandCo
     if (subscription.cancel_at_period_end) {
         return null;
     }
-    const label = 'Cancel subscription';
+    const label = portalSettings.fields.accountProfileLabels.cancelSubscription;
     const isRunning = ['cancelSubscription:running'].includes(action);
     const disabled = (isRunning) ? true : false;
     const isPrimary = !!subscription.cancel_at_period_end;
@@ -103,31 +105,31 @@ const CancelSubscriptionButton = ({member, onCancelSubscription, action, brandCo
 
 // For confirmation flows
 const PlanConfirmationSection = ({plan, type, onConfirm}) => {
-    const {action, member, brandColor} = useContext(AppContext);
+    const {action, member, brandColor, portalSettings} = useContext(AppContext);
     const [reason, setReason] = useState('');
     const subscription = getMemberSubscription({member});
     const isRunning = ['updateSubscription:running', 'checkoutPlan:running', 'cancelSubscription:running'].includes(action);
-    const label = 'Confirm';
+    const label = portalSettings.fields.accountProfileLabels.confirm;
     let planStartDate = getDateString(subscription.current_period_end);
     const currentActivePlan = getMemberActivePrice({member});
     if (currentActivePlan.id !== plan.id) {
-        planStartDate = 'today';
+        planStartDate = portalSettings.fields.accountProfileLabels.today;
     }
     const priceString = formatNumber(plan.price);
-    const planStartMessage = `${plan.currency_symbol}${priceString}/${plan.interval} – Starting ${planStartDate}`;
+    const planStartMessage = `${plan.currency_symbol}${priceString}/${portalSettings.fields.accountProfileLabels[plan.interval]} – ${portalSettings.fields.accountProfileLabels.starting} ${planStartDate}`;
     if (type === 'changePlan') {
         return (
             <>
                 <div className='gh-portal-list outline mb6'>
                     <section>
                         <div className='gh-portal-list-detail'>
-                            <h3>Account</h3>
+                            <h3>{portalSettings.fields.accountProfileLabels.account}</h3>
                             <p>{member.email}</p>
                         </div>
                     </section>
                     <section>
                         <div className='gh-portal-list-detail'>
-                            <h3>Price</h3>
+                            <h3>{portalSettings.fields.accountProfileLabels.price}</h3>
                             <p>{planStartMessage}</p>
                         </div>
                     </section>
@@ -148,10 +150,10 @@ const PlanConfirmationSection = ({plan, type, onConfirm}) => {
     } else {
         return (
             <div className="gh-portal-cancellation-form">
-                <p>If you cancel your subscription now, you will continue to have access until <strong>{getDateString(subscription.current_period_end)}</strong>.</p>
+                <p>{portalSettings.fields.accountProfileLabels.haveAccessUntil} <strong>{getDateString(subscription.current_period_end)}</strong>.</p>
                 <section className='gh-portal-input-section'>
                     <div className='gh-portal-input-labelcontainer'>
-                        <label className='gh-portal-input-label'>Cancellation reason</label>
+                        <label className='gh-portal-input-label'>{portalSettings.fields.accountProfileLabels.cancellationReason}</label>
                     </div>
                     <textarea
                         className='gh-portal-input'
@@ -171,7 +173,7 @@ const PlanConfirmationSection = ({plan, type, onConfirm}) => {
                     isRunning={isRunning}
                     isPrimary={true}
                     brandColor={brandColor}
-                    label={label + ' cancellation'}
+                    label={label + ' ' + portalSettings.fields.accountProfileLabels.cancellation}
                     style={{
                         width: '100%',
                         height: '40px'
@@ -205,7 +207,7 @@ const ChangePlanSection = ({plans, selectedPlan, onPlanSelect, onCancelSubscript
 const UpgradePlanSection = ({
     plans, selectedPlan, onPlanSelect, onPlanCheckout
 }) => {
-    const {action, brandColor} = useContext(AppContext);
+    const {action, brandColor, portalSettings} = useContext(AppContext);
     const isRunning = ['checkoutPlan:running'].includes(action);
     let singlePlanClass = '';
     if (plans.length === 1) {
@@ -226,7 +228,7 @@ const UpgradePlanSection = ({
                 isRunning={isRunning}
                 isPrimary={true}
                 brandColor={brandColor}
-                label={'Continue'}
+                label={portalSettings.fields.buttonLabels.continue}
                 style={{height: '40px', width: '100%', marginTop: '24px'}}
             />
         </section>

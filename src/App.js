@@ -18,7 +18,8 @@ const React = require('react');
 const DEV_MODE_DATA = {
     showPopup: true,
     site: Fixtures.site,
-    member: Fixtures.member.paid,
+    member: Fixtures.member.preview,
+    //page: 'accountHome'
     page: 'signup'
 };
 export default class App extends React.Component {
@@ -60,6 +61,8 @@ export default class App extends React.Component {
             const {siteUrl} = this.props;
             const contextState = this.getContextFromState();
             this.sendPortalReadyEvent();
+            // eslint-disable-next-line no-console
+            //console.log(contextState.member);
             handleDataAttributes({
                 siteUrl,
                 site: contextState.site,
@@ -142,6 +145,8 @@ export default class App extends React.Component {
                 action: 'init:success',
                 initStatus: 'success'
             };
+            // eslint-disable-next-line no-console
+            //console.log(state);
             this.handleSignupQuery({site, pageQuery});
 
             this.setState(state);
@@ -172,7 +177,7 @@ export default class App extends React.Component {
         const {site: notificationSiteData, ...restNotificationData} = this.fetchNotificationData();
         let page = '';
 
-        return {
+        const returnData = {
             member,
             page,
             site: {
@@ -196,6 +201,9 @@ export default class App extends React.Component {
                 ...goPilotportalSettings
             }
         };
+        // eslint-disable-next-line no-console
+        //console.log(restDevData);
+        return returnData;
     }
 
     /** Fetch state for Dev mode */
@@ -556,6 +564,8 @@ export default class App extends React.Component {
 
     /**Get final page set in App context from state data*/
     getContextPage({site, page, member}) {
+        // eslint-disable-next-line no-console
+        //console.log(page);
         /**Set default page based on logged-in status */
         if (!page) {
             const loggedOutPage = isInviteOnlySite({site}) ? 'signin' : 'signup';
@@ -592,8 +602,14 @@ export default class App extends React.Component {
     /**Get final App level context from App state*/
     getContextFromState() {
         const {portalSettings, site, member, action, page, lastPage, showPopup, pageQuery, popupNotification, customSiteUrl} = this.state;
+        // eslint-disable-next-line no-console
+        //console.log(page);
         const contextPage = this.getContextPage({site, page, member});
+        // eslint-disable-next-line no-console
+        //console.log(contextPage);
         const contextMember = this.getContextMember({page: contextPage, member});
+        // eslint-disable-next-line no-console
+        //console.log(contextMember);
         return {
             portalSettings,
             site,

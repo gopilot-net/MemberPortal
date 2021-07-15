@@ -1,3 +1,4 @@
+/* eslint-disable */
 export function removePortalLinkFromUrl() {
     const [path] = window.location.hash.substr(1).split('?');
     const linkRegex = /^\/portal\/?(?:\/(\w+(?:\/\w+)?))?\/?$/;
@@ -147,7 +148,7 @@ export function hasMultipleProducts({site = {}}) {
     if (site.portal_products && site.portal_products.length < 2) {
         return false;
     }
-    if (products?.length > 1) {
+     if (products?.length > 1) {
         return true;
     }
     return false;

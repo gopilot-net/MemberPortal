@@ -17,7 +17,7 @@ import {AvatarStyles} from './common/MemberGravatar';
 import {MagicLinkStyles} from './pages/MagicLinkPage';
 import {LinkPageStyles} from './pages/LinkPage';
 import {PopupNotificationStyles} from './common/PopupNotification';
-import {GoPilotStyles} from '../utils/gopilot-api';
+// import {GoPilotStyles} from '../utils/gopilot-api';
 
 // Global styles
 const FrameStyles = `

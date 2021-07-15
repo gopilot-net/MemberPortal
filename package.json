@@ -47,6 +47,9 @@
     "prepublishOnly": "yarn build"
   },
   "eslintConfig": {
+     "rules": {
+        "no-console": "off"
+    },
     "extends": [
       "react-app",
       "plugin:ghost/browser"
