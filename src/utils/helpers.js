@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-/* eslint-disable */
-=======
 import calculateDiscount from './discount';
 
->>>>>>> 84ba0f8fa5115252ec29aad5f31a4bc07f849754
 export function removePortalLinkFromUrl() {
     const [path] = window.location.hash.substr(1).split('?');
     const linkRegex = /^\/portal\/?(?:\/(\w+(?:\/\w+)*))?\/?$/;
@@ -183,24 +179,10 @@ export function isInviteOnlySite({site = {}, pageQuery = ''}) {
     return prices.length === 0 || (site && site.members_signup_access === 'invite');
 }
 
-<<<<<<< HEAD
-export function hasMultipleProducts({site = {}}) {
-    const {
-        products = []
-    } = site || {};
-    if (site.portal_plans && !site.portal_plans.includes('monthly') && !site.portal_plans.includes('yearly')) {
-        return false;
-    }
-    if (site.portal_products && site.portal_products.length < 2) {
-        return false;
-    }
-     if (products?.length > 1) {
-=======
 export function hasMultipleProducts({site}) {
     const products = getAvailableProducts({site});
 
     if (products?.length > 1) {
->>>>>>> 84ba0f8fa5115252ec29aad5f31a4bc07f849754
         return true;
     }
     return false;
