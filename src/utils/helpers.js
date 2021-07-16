@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 /* eslint-disable */
+=======
+import calculateDiscount from './discount';
+
+>>>>>>> 84ba0f8fa5115252ec29aad5f31a4bc07f849754
 export function removePortalLinkFromUrl() {
     const [path] = window.location.hash.substr(1).split('?');
-    const linkRegex = /^\/portal\/?(?:\/(\w+(?:\/\w+)?))?\/?$/;
+    const linkRegex = /^\/portal\/?(?:\/(\w+(?:\/\w+)*))?\/?$/;
     if (path && linkRegex.test(path)) {
         window.history.pushState('', document.title, window.location.pathname + window.location.search);
     }
@@ -9,12 +14,8 @@ export function removePortalLinkFromUrl() {
 
 export function getPortalLinkPath({page}) {
     const Links = {
-        default: '#/portal',
         signin: '#/portal/signin',
-        signup: '#/portal/signup',
-        account: '#/portal/account',
-        'account-plans': '#/portal/account/plans',
-        'account-profile': '#/portal/account/profile'
+        signup: '#/portal/signup'
     };
     if (Object.keys(Links).includes(page)) {
         return Links[page];
@@ -32,28 +33,71 @@ export function isCookiesDisabled() {
     return !(navigator && navigator.cookieEnabled);
 }
 
+export function isSentryEventAllowed({event: sentryEvent}) {
+    const frames = sentryEvent?.exception?.values?.[0]?.stacktrace?.frames || [];
+    const fileNames = frames.map(frame => frame.filename).filter(filename => !!filename);
+    const lastFileName = fileNames[fileNames.length - 1] || '';
+    return lastFileName.includes('@tryghost/portal');
+}
+
 export function getMemberSubscription({member = {}}) {
     if (isPaidMember({member})) {
         const subscriptions = member.subscriptions || [];
         const activeSubscription = subscriptions.find((sub) => {
             return ['active', 'trialing', 'unpaid', 'past_due'].includes(sub.status);
         });
+        if (!activeSubscription?.price && activeSubscription?.plan) {
+            activeSubscription.price = activeSubscription.plan;
+        }
         return activeSubscription;
     }
     return null;
 }
 
 export function isComplimentaryMember({member = {}}) {
+    if (!member) {
+        return false;
+    }
     const subscription = getMemberSubscription({member});
     if (subscription) {
         const {price} = subscription;
-        return (price.amount === 0);
+        return (price && price.amount === 0);
+    } else if (!subscription && !!member.paid) {
+        return true;
     }
     return false;
 }
 
 export function isPaidMember({member = {}}) {
     return (member && member.paid);
+}
+
+export function getUpgradePrices({site, member}) {
+    const activePrice = getMemberActivePrice({member});
+
+    if (activePrice) {
+        return getFilteredPrices({prices: this.prices, currency: activePrice.currency});
+    }
+    return getAvailablePrices({site});
+}
+
+export function getProductCurrency({product}) {
+    if (!product?.monthlyPrice) {
+        return null;
+    }
+    return product.monthlyPrice.currency;
+}
+
+export function getUpgradeProducts({site, member}) {
+    const activePrice = getMemberActivePrice({member});
+    const activePriceCurrency = activePrice?.currency;
+    const availableProducts = getAvailableProducts({site});
+    if (!activePrice) {
+        return availableProducts;
+    }
+    return availableProducts.filter((product) => {
+        return (getProductCurrency({product}) === activePriceCurrency);
+    });
 }
 
 export function getFilteredPrices({prices, currency}) {
@@ -70,6 +114,7 @@ export function getPriceFromSubscription({subscription}) {
             id: subscription.price.price_id,
             price: subscription.price.amount / 100,
             name: subscription.price.nickname,
+            currency: subscription.price.currency.toLowerCase(),
             currency_symbol: getCurrencySymbol(subscription.price.currency)
         };
     }
@@ -138,6 +183,7 @@ export function isInviteOnlySite({site = {}, pageQuery = ''}) {
     return prices.length === 0 || (site && site.members_signup_access === 'invite');
 }
 
+<<<<<<< HEAD
 export function hasMultipleProducts({site = {}}) {
     const {
         products = []
@@ -149,21 +195,68 @@ export function hasMultipleProducts({site = {}}) {
         return false;
     }
      if (products?.length > 1) {
+=======
+export function hasMultipleProducts({site}) {
+    const products = getAvailableProducts({site});
+
+    if (products?.length > 1) {
+>>>>>>> 84ba0f8fa5115252ec29aad5f31a4bc07f849754
         return true;
     }
     return false;
 }
 
-export function getSiteProducts({site = {}}) {
-    const products = site?.products || [];
-    return products.filter(product => !!product).sort((productA, productB) => {
-        return productA?.monthlyPrice?.amount - productB?.monthlyPrice.amount;
+export function hasMultipleProductsFeature({site}) {
+    const {portal_products: portalProducts} = site || {};
+    return !!portalProducts;
+}
+
+export function getAvailableProducts({site}) {
+    const {portal_products: portalProducts, products = [], portal_plans: portalPlans = []} = site || {};
+
+    if (!portalPlans.includes('monthly') && !portalPlans.includes('yearly')) {
+        return [];
+    }
+
+    return products.filter(product => !!product).filter((product) => {
+        return !!(product.monthlyPrice && product.yearlyPrice);
+    }).filter((product) => {
+        return !!(Object.keys(product.monthlyPrice).length > 0 && Object.keys(product.yearlyPrice).length > 0);
+    }).filter((product) => {
+        if (portalProducts && products.length > 1) {
+            return portalProducts.includes(product.id);
+        }
+        return true;
+    }).sort((productA, productB) => {
+        return productA?.monthlyPrice?.amount - productB?.monthlyPrice?.amount;
+    }).map((product) => {
+        product.monthlyPrice = {
+            ...product.monthlyPrice,
+            currency_symbol: getCurrencySymbol(product.monthlyPrice.currency)
+        };
+        product.yearlyPrice = {
+            ...product.yearlyPrice,
+            currency_symbol: getCurrencySymbol(product.yearlyPrice.currency)
+        };
+        return product;
     });
 }
 
-export function getAllProducts({site}) {
-    const products = getSiteProducts({site});
-    if (hasFreeProduct({site})) {
+export function hasBenefits({prices, site}) {
+    if (!hasMultipleProductsFeature({site})) {
+        return false;
+    }
+    if (!prices?.length) {
+        return false;
+    }
+    return prices.some((price) => {
+        return price?.benefits?.length;
+    });
+}
+
+export function getSiteProducts({site}) {
+    const products = getAvailableProducts({site});
+    if (hasFreeProductPrice({site}) && products.length > 0) {
         products.unshift({
             id: 'free'
         });
@@ -171,9 +264,45 @@ export function getAllProducts({site}) {
     return products;
 }
 
-export function getProductPrices({site}) {
-    const products = getSiteProducts({site}) || [];
-    const prices = products.reduce((accumPrices, product) => {
+export function getFreeBenefits() {
+    return [{
+        name: 'Access to free articles'
+    }];
+}
+
+export function getProductBenefits({product, site = null}) {
+    if (product?.monthlyPrice && product?.yearlyPrice) {
+        const availablePrices = getAvailablePrices({site, products: [product]});
+        const yearlyDiscount = calculateDiscount(product.monthlyPrice.amount, product.yearlyPrice.amount);
+        const productBenefits = product?.benefits || [];
+        const monthlyBenefits = product?.benefits?.length > 0 ? [...productBenefits] : [{
+            name: 'Full access to all articles'
+        }];
+        const yearlyBenefits = [...monthlyBenefits];
+        if (yearlyDiscount > 0 && availablePrices.length > 1) {
+            yearlyBenefits.push({
+                name: `${yearlyDiscount}% discount`
+            });
+        }
+        return {
+            monthly: monthlyBenefits,
+            yearly: yearlyBenefits
+        };
+    }
+}
+
+export function getProductFromId({site, productId}) {
+    const availableProducts = getAvailableProducts({site});
+    return availableProducts.find(product => product.id === productId);
+}
+
+export function getPricesFromProducts({site = null, products = null}) {
+    if (!site && !products) {
+        return [];
+    }
+
+    const availableProducts = products || getAvailableProducts({site});
+    const prices = availableProducts.reduce((accumPrices, product) => {
         if (product.monthlyPrice && product.yearlyPrice) {
             accumPrices.push(product.monthlyPrice);
             accumPrices.push(product.yearlyPrice);
@@ -183,63 +312,7 @@ export function getProductPrices({site}) {
     return prices;
 }
 
-export function getAvailablePrices({site = {}, includeFree = true} = {}) {
-    let {
-        prices,
-        products,
-        allow_self_signup: allowSelfSignup,
-        is_stripe_configured: isStripeConfigured
-    } = site || {};
-
-    if (!prices) {
-        prices = [];
-    }
-
-    if (products) {
-        prices = [];
-        products.forEach((product) => {
-            if (product.prices) {
-                prices = prices.concat(product.prices);
-            }
-        });
-    }
-
-    const plansData = [];
-
-    const stripePrices = prices.filter((d) => {
-        return !!(d && d.id);
-    }).map((d) => {
-        return {
-            ...d,
-            price_id: d.id,
-            price: d.amount / 100,
-            name: d.nickname,
-            currency_symbol: getCurrencySymbol(d.currency)
-        };
-    }).filter((price) => {
-        return price.amount !== 0 && price.type === 'recurring';
-    });
-
-    if (allowSelfSignup && includeFree) {
-        plansData.push({
-            id: 'free',
-            type: 'free',
-            price: 0,
-            currency: 'usd',
-            currency_symbol: '$',
-            name: 'Free'
-        });
-    }
-
-    if (isStripeConfigured) {
-        stripePrices.forEach((price) => {
-            plansData.push(price);
-        });
-    }
-    return plansData;
-}
-
-export function hasFreeProduct({site}) {
+export function hasFreeProductPrice({site}) {
     const {
         allow_self_signup: allowSelfSignup,
         portal_plans: portalPlans
@@ -247,25 +320,26 @@ export function hasFreeProduct({site}) {
     return allowSelfSignup && portalPlans.includes('free');
 }
 
-export function getSitePrices({site = {}, includeFree = true, pageQuery = ''} = {}) {
+export function getProductFromPrice({site, priceId}) {
+    const products = getAvailableProducts({site});
+    return products.find((product) => {
+        return (product?.monthlyPrice?.id === priceId) || (product?.yearlyPrice?.id === priceId);
+    });
+}
+
+export function getAvailablePrices({site, products = null}) {
     const {
-        prices = [],
-        allow_self_signup: allowSelfSignup,
-        is_stripe_configured: isStripeConfigured,
-        portal_plans: portalPlans
+        portal_plans: portalPlans = [],
+        is_stripe_configured: isStripeConfigured
     } = site || {};
 
-    if (!prices) {
+    if (!isStripeConfigured) {
         return [];
     }
-    let availablePrices = prices;
-    if (hasMultipleProducts({site})) {
-        availablePrices = getProductPrices({site});
-    }
 
-    const plansData = [];
+    const productPrices = getPricesFromProducts({site, products});
 
-    const stripePrices = availablePrices.filter((d) => {
+    return productPrices.filter((d) => {
         return !!(d && d.id);
     }).map((d) => {
         return {
@@ -279,10 +353,10 @@ export function getSitePrices({site = {}, includeFree = true, pageQuery = ''} = 
         return price.amount !== 0 && price.type === 'recurring';
     }).filter((price) => {
         if (price.interval === 'month') {
-            return (portalPlans || []).includes('monthly');
+            return portalPlans.includes('monthly');
         }
         if (price.interval === 'year') {
-            return (portalPlans || []).includes('yearly');
+            return portalPlans.includes('yearly');
         }
         return false;
     }).sort((a, b) => {
@@ -292,19 +366,33 @@ export function getSitePrices({site = {}, includeFree = true, pageQuery = ''} = 
             return 0;
         }
         return a.currency.localeCompare(b.currency, undefined, {ignorePunctuation: true});
-    }).sort((a, b) => {
-        return (a.active === b.active) ? 0 : (a.active ? -1 : 1);
     });
+}
+
+export function getFreePriceCurrency({site}) {
+    const stripePrices = getAvailablePrices({site});
+
     let freePriceCurrencyDetail = {
         currency: 'usd',
         currency_symbol: '$'
     };
-    if (stripePrices && stripePrices.length > 0) {
+    if (stripePrices?.length > 0) {
         freePriceCurrencyDetail.currency = stripePrices[0].currency;
         freePriceCurrencyDetail.currency_symbol = stripePrices[0].currency_symbol;
     }
+    return freePriceCurrencyDetail;
+}
 
-    if (allowSelfSignup && portalPlans.includes('free') && includeFree) {
+export function getSitePrices({site = {}, pageQuery = ''} = {}) {
+    const {
+        allow_self_signup: allowSelfSignup,
+        portal_plans: portalPlans
+    } = site || {};
+
+    const plansData = [];
+
+    if (allowSelfSignup && portalPlans.includes('free')) {
+        const freePriceCurrencyDetail = getFreePriceCurrency({site});
         plansData.push({
             id: 'free',
             type: 'free',
@@ -315,9 +403,10 @@ export function getSitePrices({site = {}, includeFree = true, pageQuery = ''} = 
 
         });
     }
-    const showOnlyFree = pageQuery === 'free' && hasPrice({site, plan: 'free'});
+    const showOnlyFree = pageQuery === 'free' && hasFreeProductPrice({site});
 
-    if (isStripeConfigured && !showOnlyFree) {
+    if (!showOnlyFree) {
+        const stripePrices = getAvailablePrices({site});
         stripePrices.forEach((price) => {
             plansData.push(price);
         });

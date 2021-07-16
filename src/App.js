@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import TriggerButton from './components/TriggerButton';
 import Notification from './components/Notification';
 import PopupModal from './components/PopupModal';
@@ -10,7 +11,7 @@ import * as Fixtures from './utils/fixtures';
 import ActionHandler from './actions';
 import './App.css';
 import NotificationParser from './utils/notifications';
-import {createPopupNotification, getCurrencySymbol, getFirstpromoterId, getQueryPrice, getSiteDomain, isComplimentaryMember, isInviteOnlySite, removePortalLinkFromUrl} from './utils/helpers';
+import {createPopupNotification, getCurrencySymbol, getFirstpromoterId, getProductFromId, getQueryPrice, getSiteDomain, isComplimentaryMember, isInviteOnlySite, isSentryEventAllowed, removePortalLinkFromUrl} from './utils/helpers';
 
 const handleDataAttributes = require('./data-attributes');
 const React = require('react');
@@ -22,6 +23,23 @@ const DEV_MODE_DATA = {
     //page: 'accountHome'
     page: 'signup'
 };
+
+function SentryErrorBoundary({site, children}) {
+    const {portal_sentry: portalSentry} = site || {};
+    if (portalSentry && portalSentry.dsn) {
+        return (
+            <Sentry.ErrorBoundary>
+                {children}
+            </Sentry.ErrorBoundary>
+        );
+    }
+    return (
+        <>
+            {children}
+        </>
+    );
+}
+
 export default class App extends React.Component {
     constructor(props) {
         super(props);
@@ -96,13 +114,12 @@ export default class App extends React.Component {
             const target = event.currentTarget;
             const pagePath = (target && target.dataset.portal);
             const {page, pageQuery} = this.getPageFromLinkPath(pagePath) || {};
-
             if (this.state.initStatus === 'success') {
-                this.handleSignupQuery({site: this.state.site, pageQuery});
-            }
-
-            if (page) {
-                this.dispatchAction('openPopup', {page, pageQuery});
+                if (pageQuery && pageQuery !== 'free') {
+                    this.handleSignupQuery({site: this.state.site, pageQuery});
+                } else {
+                    this.dispatchAction('openPopup', {page, pageQuery});
+                }
             }
         };
         const customTriggerSelector = '[data-portal]';
@@ -226,6 +243,7 @@ export default class App extends React.Component {
 
         const allowedPlans = [];
         let portalPrices;
+        let portalProducts = null;
         let monthlyPrice, yearlyPrice, currency;
         // Handle the query params key/value pairs
         for (let pair of qsParams.entries()) {
@@ -243,6 +261,8 @@ export default class App extends React.Component {
                 allowedPlans.push('yearly');
             } else if (key === 'portalPrices') {
                 portalPrices = value ? value.split(',') : [];
+            } else if (key === 'portalProducts') {
+                portalProducts = value ? value.split(',') : [];
             } else if (key === 'page' && value) {
                 data.page = value;
             } else if (key === 'accentColor' && (value === '' || value)) {
@@ -273,6 +293,7 @@ export default class App extends React.Component {
             }
         }
         data.site.portal_plans = allowedPlans;
+        data.site.portal_products = portalProducts;
         if (portalPrices) {
             data.site.portal_plans = portalPrices;
         } else if (monthlyPrice && yearlyPrice && currency) {
@@ -327,14 +348,21 @@ export default class App extends React.Component {
 
     /** Fetch state from Portal Links */
     fetchLinkData() {
+        const productMonthlyPriceQueryRegex = /^(?:(\w+?))?\/monthly$/;
+        const productYearlyPriceQueryRegex = /^(?:(\w+?))?\/monthly$/;
         const [path] = window.location.hash.substr(1).split('?');
-        const linkRegex = /^\/portal\/?(?:\/(\w+(?:\/\w+)?))?\/?$/;
+        const linkRegex = /^\/portal\/?(?:\/(\w+(?:\/\w+)*))?\/?$/;
         if (path && linkRegex.test(path)) {
             const [,pagePath] = path.match(linkRegex);
             const {page, pageQuery} = this.getPageFromLinkPath(pagePath) || {};
             const lastPage = ['accountPlan', 'accountProfile'].includes(page) ? 'accountHome' : null;
+            const showPopup = (
+                ['monthly', 'yearly'].includes(pageQuery) ||
+                productMonthlyPriceQueryRegex.test(pageQuery) ||
+                productYearlyPriceQueryRegex.test(pageQuery)
+            ) ? false : true;
             return {
-                showPopup: ['monthly', 'yearly'].includes(pageQuery) ? false : true,
+                showPopup,
                 ...(page ? {page} : {}),
                 ...(pageQuery ? {pageQuery} : {}),
                 ...(lastPage ? {lastPage} : {})
@@ -365,8 +393,8 @@ export default class App extends React.Component {
 
     /** Fetch site and member session data with Ghost Apis  */
     async fetchApiData() {
+        const {siteUrl, customSiteUrl} = this.props;
         try {
-            const {siteUrl} = this.props;
             this.GhostApi = setupGhostApi({siteUrl});
             const {site, member} = await this.GhostApi.init();
 
@@ -376,9 +404,10 @@ export default class App extends React.Component {
             }
 
             this.setupFirstPromoter({site, member});
+            this.setupSentry({site});
             return {site, member};
         } catch (e) {
-            if (hasMode(['dev', 'test'])) {
+            if (hasMode(['dev', 'test'], {customSiteUrl})) {
                 return {};
             }
             throw e;
@@ -400,6 +429,28 @@ export default class App extends React.Component {
                 return {};
             }
             throw e;
+        }
+    }
+    /** Setup Sentry */
+    setupSentry({site}) {
+        const {portal_sentry: portalSentry, portal_version: portalVersion, version: ghostVersion} = site;
+        const appVersion = process.env.REACT_APP_VERSION || portalVersion;
+        const releaseTag = `portal@${appVersion}|ghost@${ghostVersion}`;
+        if (portalSentry && portalSentry.dsn) {
+            Sentry.init({
+                dsn: portalSentry.dsn,
+                environment: portalSentry.env || 'development',
+                release: releaseTag,
+                beforeSend: (event) => {
+                    if (isSentryEventAllowed({event})) {
+                        return event;
+                    }
+                    return null;
+                },
+                allowUrls: [
+                    /https?:\/\/((www)\.)?unpkg\.com\/@tryghost\/portal/
+                ]
+            });
         }
     }
 
@@ -498,22 +549,48 @@ export default class App extends React.Component {
 
     /** Handle direct signup link for a price */
     handleSignupQuery({site, pageQuery}) {
-        const queryPrice = getQueryPrice({site: site, priceId: pageQuery});
+        const productMonthlyPriceQueryRegex = /^(?:(\w+?))?\/monthly$/;
+        const productYearlyPriceQueryRegex = /^(?:(\w+?))?\/monthly$/;
+        let priceId = pageQuery;
+        if (productMonthlyPriceQueryRegex.test(pageQuery || '')) {
+            const [, productId] = pageQuery.match(productMonthlyPriceQueryRegex);
+            const product = getProductFromId({site, productId});
+            priceId = product?.monthlyPrice?.id;
+        } else if (productYearlyPriceQueryRegex.test(pageQuery || '')) {
+            const [, productId] = pageQuery.match(productYearlyPriceQueryRegex);
+            const product = getProductFromId({site, productId});
+            priceId = product?.yearlyPrice?.id;
+        }
+        const queryPrice = getQueryPrice({site: site, priceId});
         if (!this.state.member
+            && pageQuery
             && pageQuery !== 'free'
-            && queryPrice
         ) {
             removePortalLinkFromUrl();
-            this.dispatchAction('signup', {plan: queryPrice.id});
+            this.dispatchAction('signup', {plan: queryPrice?.id || priceId});
         }
     }
 
     /**Get Portal page from Link/Data-attribute path*/
     getPageFromLinkPath(path) {
         const customPricesSignupRegex = /^signup\/?(?:\/(\w+?))?\/?$/;
+        const customMonthlyProductSignup = /^signup\/?(?:\/(\w+?))\/monthly\/?$/;
+        const customYearlyProductSignup = /^signup\/?(?:\/(\w+?))\/yearly\/?$/;
         if (path === 'signup') {
             return {
                 page: 'signup'
+            };
+        } else if (customMonthlyProductSignup.test(path)) {
+            const [, productId] = path.match(customMonthlyProductSignup);
+            return {
+                page: 'signup',
+                pageQuery: `${productId}/monthly`
+            };
+        } else if (customYearlyProductSignup.test(path)) {
+            const [, productId] = path.match(customYearlyProductSignup);
+            return {
+                page: 'signup',
+                pageQuery: `${productId}/yearly`
             };
         } else if (customPricesSignupRegex.test(path)) {
             const [, pageQuery] = path.match(customPricesSignupRegex);
@@ -580,11 +657,11 @@ export default class App extends React.Component {
     }
 
     /**Get final member set in App context from state data*/
-    getContextMember({page, member}) {
-        if (hasMode(['dev', 'preview'])) {
+    getContextMember({page, member, customSiteUrl}) {
+        if (hasMode(['dev', 'preview'], {customSiteUrl})) {
             /** Use dummy member(free or paid) for account pages in dev/preview mode*/
             if (isAccountPage({page})) {
-                if (hasMode(['dev'])) {
+                if (hasMode(['dev'], {customSiteUrl})) {
                     return member || Fixtures.member.free;
                 } else if (hasMode(['preview'])) {
                     return Fixtures.member.preview;
@@ -605,11 +682,7 @@ export default class App extends React.Component {
         // eslint-disable-next-line no-console
         //console.log(page);
         const contextPage = this.getContextPage({site, page, member});
-        // eslint-disable-next-line no-console
-        //console.log(contextPage);
-        const contextMember = this.getContextMember({page: contextPage, member});
-        // eslint-disable-next-line no-console
-        //console.log(contextMember);
+        const contextMember = this.getContextMember({page: contextPage, member, customSiteUrl});
         return {
             portalSettings,
             site,
@@ -629,11 +702,13 @@ export default class App extends React.Component {
     render() {
         if (this.state.initStatus === 'success') {
             return (
-                <AppContext.Provider value={this.getContextFromState()}>
-                    <PopupModal />
-                    <TriggerButton />
-                    <Notification />
-                </AppContext.Provider>
+                <SentryErrorBoundary site={this.state.site}>
+                    <AppContext.Provider value={this.getContextFromState()}>
+                        <PopupModal />
+                        <TriggerButton />
+                        <Notification />
+                    </AppContext.Provider>
+                </SentryErrorBoundary>
             );
         }
         return null;

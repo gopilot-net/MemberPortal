@@ -2,11 +2,11 @@
 import ActionButton from '../common/ActionButton';
 import CloseButton from '../common/CloseButton';
 import AppContext from '../../AppContext';
-import PlansSection from '../common/PlansSection';
+import PlansSection, {SingleProductPlansSection} from '../common/PlansSection';
 import ProductsSection from '../common/ProductsSection';
 import InputForm from '../common/InputForm';
 import {ValidateInputForm} from '../../utils/form';
-import {getAllProducts, getSitePrices, hasMultipleProducts, hasOnlyFreePlan, isInviteOnlySite} from '../../utils/helpers';
+import {getSiteProducts, getSitePrices, hasMultipleProducts, hasOnlyFreePlan, isInviteOnlySite, getAvailableProducts, hasMultipleProductsFeature} from '../../utils/helpers';
 import {ReactComponent as InvitationIcon} from '../../images/icons/invitation.svg';
 
 const React = require('react');
@@ -36,10 +36,6 @@ export const SignupPageStyles = `
         margin-top: 12px;
     }
 
-    .gh-portal-popup-wrapper.fullscreen .gh-portal-signin-header {
-        padding-top: 18vmin;
-    }
-
     .gh-portal-signup-logo + .gh-portal-main-title {
         margin: 4px 0 0;
     }
@@ -55,10 +51,6 @@ export const SignupPageStyles = `
     .gh-portal-signup-header.nodivider {
         border: none;
         margin-bottom: 0;
-    }
-
-    .gh-portal-popup-wrapper.signin.fullscreen .gh-portal-popup-container {
-        padding-bottom: 3vmin;
     }
 
     .gh-portal-signup-message {
@@ -93,16 +85,6 @@ export const SignupPageStyles = `
         background-attachment: local,local,scroll,scroll;
     }
 
-    .gh-portal-popup-wrapper.fullscreen .gh-portal-content.signup,
-    .gh-portal-popup-wrapper.fullscreen .gh-portal-content.signin {
-        width: 100%;
-    }
-
-    .gh-portal-popup-wrapper.fullscreen .gh-portal-input-section {
-        max-width: 420px;
-        margin: 0 auto;
-    }
-
     .gh-portal-content.signup.invite-only {
         background: none;
     }
@@ -111,26 +93,6 @@ export const SignupPageStyles = `
     footer.gh-portal-signin-footer {
         padding-top: 24px;
         height: 132px;
-    }
-
-    .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signup-footer,
-    .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signin-footer {
-        width: 100%;
-        max-width: 420px;
-        height: unset;
-        padding: 0 !important;
-        margin: 24px 32px;
-    }
-
-    @media (max-width: 480px) {
-        .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signup-footer,
-        .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signin-footer {
-            padding: 0 24px !important;
-        }
-    }
-
-    .gh-portal-popup-wrapper.fullscreen footer.gh-portal-signin-footer {
-        padding-top: 24px;
     }
 
     .gh-portal-content.signup,
@@ -189,6 +151,68 @@ export const SignupPageStyles = `
         width: 44px;
         height: 44px;
         margin: 12px 0 2px;
+    }
+
+
+    /* Multiple products signup */
+
+    .gh-portal-popup-wrapper.signup.multiple-products .gh-portal-content,
+    .gh-portal-popup-wrapper.signin.multiple-products .gh-portal-content {
+        width: 100%;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .gh-portal-popup-wrapper.multiple-products .gh-portal-signin-header {
+        padding-top: 18vmin;
+    }
+
+    .gh-portal-popup-wrapper.signin.multiple-products .gh-portal-popup-container {
+        padding-bottom: 3vmin;
+    }
+
+    .gh-portal-popup-wrapper.multiple-products footer.gh-portal-signup-footer,
+    .gh-portal-popup-wrapper.multiple-products footer.gh-portal-signin-footer {
+        width: 100%;
+        max-width: 420px;
+        height: unset;
+        padding: 0 !important;
+        margin: 24px 32px;
+    }
+
+
+    .gh-portal-popup-wrapper.multiple-products footer.gh-portal-signin-footer {
+        padding-top: 24px;
+    }
+
+    .gh-portal-popup-wrapper.multiple-products.signin .gh-portal-powered {
+        position: absolute;
+        bottom: 0;
+    }
+
+    @media (max-width: 480px) {
+        .gh-portal-popup-wrapper.multiple-products footer.gh-portal-signup-footer,
+        .gh-portal-popup-wrapper.multiple-products footer.gh-portal-signin-footer {
+            max-width: unset;
+            padding: 0 32px !important;
+        }
+
+        .gh-portal-popup-wrapper.multiple-products.preview footer.gh-portal-signup-footer,
+        .gh-portal-popup-wrapper.multiple-products.preview footer.gh-portal-signin-footer {
+            padding-bottom: 32px !important;
+        }
+
+        .gh-portal-popup-wrapper.signup.multiple-products.preview .gh-portal-content,
+        .gh-portal-popup-wrapper.signin.multiple-products.preview .gh-portal-content {
+            overflow: unset;
+        }
+    }
+
+    @media (max-width: 390px) {
+        .gh-portal-popup-wrapper.multiple-products footer.gh-portal-signup-footer,
+        .gh-portal-popup-wrapper.multiple-products footer.gh-portal-signin-footer {
+            padding: 0 24px !important;
+        }
     }
 `;
 
@@ -381,22 +405,34 @@ class SignupPage extends React.Component {
     renderPlans() {
         const {site, pageQuery} = this.context;
         const prices = getSitePrices({site, pageQuery});
-        return (
-            <>
-                <PlansSection
+        if (hasMultipleProductsFeature({site})) {
+            const availableProducts = getAvailableProducts({site});
+            const product = availableProducts?.[0];
+            return (
+                <SingleProductPlansSection
+                    product={product}
                     plans={prices}
                     selectedPlan={this.state.plan}
                     onPlanSelect={(e, id) => {
                         this.handleSelectPlan(e, id);
                     }}
                 />
-            </>
+            );
+        }
+        return (
+            <PlansSection
+                plans={prices}
+                selectedPlan={this.state.plan}
+                onPlanSelect={(e, id) => {
+                    this.handleSelectPlan(e, id);
+                }}
+            />
         );
     }
 
     renderProducts() {
         const {site} = this.context;
-        const products = getAllProducts({site});
+        const products = getSiteProducts({site});
         return (
             <>
                 <ProductsSection
@@ -553,11 +589,21 @@ class SignupPage extends React.Component {
     }
 
     render() {
-        const {site} = this.context;
-        if (hasMultipleProducts({site})) {
-            return this.renderMultipleProducts();
-        }
-        return this.renderSingleProduct();
+        let {sectionClass, footerClass} = this.getClassNames();
+
+        return (
+            <>
+                <div className={'gh-portal-content signup ' + sectionClass}>
+                    <CloseButton />
+                    {this.renderFormHeader()}
+                    {this.renderForm()}
+                </div>
+                <footer className={'gh-portal-signup-footer ' + footerClass}>
+                    {this.renderSubmitButton()}
+                    {this.renderLoginMessage()}
+                </footer>
+            </>
+        );
     }
 }
 

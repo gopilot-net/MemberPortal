@@ -3,9 +3,9 @@ import AppContext from '../../AppContext';
 import ActionButton from '../common/ActionButton';
 import CloseButton from '../common/CloseButton';
 import BackButton from '../common/BackButton';
-import PlansSection from '../common/PlansSection';
+import PlansSection, {MultipleProductsPlansSection, SingleProductPlansSection} from '../common/PlansSection';
 import {getDateString} from '../../utils/date-time';
-import {formatNumber, getFilteredPrices, getMemberActivePrice, getMemberSubscription, getPriceFromSubscription, getSitePrices, getSubscriptionFromId, isPaidMember} from '../../utils/helpers';
+import {formatNumber, getAvailablePrices, getFilteredPrices, getMemberActivePrice, getMemberSubscription, getPriceFromSubscription, getProductFromPrice, getSubscriptionFromId, getUpgradeProducts, hasMultipleProducts, hasMultipleProductsFeature, isPaidMember} from '../../utils/helpers';
 
 export const AccountPlanPageStyles = `
     .gh-portal-accountplans-main {
@@ -105,7 +105,7 @@ const CancelSubscriptionButton = ({member, onCancelSubscription, action, brandCo
 
 // For confirmation flows
 const PlanConfirmationSection = ({plan, type, onConfirm}) => {
-    const {action, member, brandColor, portalSettings} = useContext(AppContext);
+    const {site, action, member, brandColor, portalSettings} = useContext(AppContext);
     const [reason, setReason] = useState('');
     const subscription = getMemberSubscription({member});
     const isRunning = ['updateSubscription:running', 'checkoutPlan:running', 'cancelSubscription:running'].includes(action);
@@ -117,6 +117,8 @@ const PlanConfirmationSection = ({plan, type, onConfirm}) => {
     }
     const priceString = formatNumber(plan.price);
     const planStartMessage = `${plan.currency_symbol}${priceString}/${portalSettings.fields.accountProfileLabels[plan.interval]} – ${portalSettings.fields.accountProfileLabels.starting} ${planStartDate}`;
+    const product = getProductFromPrice({site, priceId: plan?.id});
+    const priceLabel = hasMultipleProductsFeature({site}) ? product.name : portalSettings.fields.accountProfileLabels.price;
     if (type === 'changePlan') {
         return (
             <>
@@ -129,7 +131,7 @@ const PlanConfirmationSection = ({plan, type, onConfirm}) => {
                     </section>
                     <section>
                         <div className='gh-portal-list-detail'>
-                            <h3>{portalSettings.fields.accountProfileLabels.price}</h3>
+                            <h3>{priceLabel}</h3>
                             <p>{planStartMessage}</p>
                         </div>
                     </section>
@@ -190,11 +192,11 @@ const ChangePlanSection = ({plans, selectedPlan, onPlanSelect, onCancelSubscript
     return (
         <section>
             <div className='gh-portal-section gh-portal-accountplans-main'>
-                <PlansSection
+                <PlansOrProductSection
                     showLabel={false}
                     plans={plans}
                     selectedPlan={selectedPlan}
-                    onPlanSelect={(e, priceId) => onPlanSelect(e, priceId)}
+                    onPlanSelect={onPlanSelect}
                     changePlan={true}
                 />
             </div>
@@ -202,6 +204,50 @@ const ChangePlanSection = ({plans, selectedPlan, onPlanSelect, onCancelSubscript
         </section>
     );
 };
+
+function PlansOrProductSection({showLabel, plans, selectedPlan, onPlanSelect, changePlan}) {
+    const {site, member} = useContext(AppContext);
+    const products = getUpgradeProducts({site, member});
+    if (hasMultipleProductsFeature({site})) {
+        if (changePlan === true) {
+            return (
+                <MultipleProductsPlansSection
+                    products={products}
+                    selectedPlan={selectedPlan}
+                    changePlan={true}
+                    onPlanSelect={onPlanSelect}
+                />
+            );
+        } else if (hasMultipleProducts({site})) {
+            return (
+                <MultipleProductsPlansSection
+                    products={products}
+                    selectedPlan={selectedPlan}
+                    changePlan={changePlan}
+                    onPlanSelect={onPlanSelect}
+                />
+            );
+        } else {
+            return (
+                <SingleProductPlansSection
+                    product={products?.[0]}
+                    plans={plans}
+                    selectedPlan={selectedPlan}
+                    onPlanSelect={onPlanSelect}
+                />
+            );
+        }
+    }
+    return (
+        <PlansSection
+            showLabel={showLabel}
+            plans={plans}
+            selectedPlan={selectedPlan}
+            changePlan={changePlan}
+            onPlanSelect={onPlanSelect}
+        />
+    );
+}
 
 // For free members
 const UpgradePlanSection = ({
@@ -216,11 +262,11 @@ const UpgradePlanSection = ({
     return (
         <section>
             <div className={`gh-portal-section gh-portal-accountplans-main ${singlePlanClass}`}>
-                <PlansSection
+                <PlansOrProductSection
                     showLabel={false}
                     plans={plans}
                     selectedPlan={selectedPlan}
-                    onPlanSelect={(e, priceId) => onPlanSelect(e, priceId)}
+                    onPlanSelect={onPlanSelect}
                 />
             </div>
             <ActionButton
@@ -266,6 +312,7 @@ const PlansContainer = ({
         />
     );
 };
+
 export default class AccountPlanPage extends React.Component {
     static contextType = AppContext;
 
@@ -288,15 +335,19 @@ export default class AccountPlanPage extends React.Component {
     }
 
     getInitialState() {
-        const {member, site, pageQuery} = this.context;
-        this.prices = getSitePrices({site, pageQuery, includeFree: false});
+        const {member, site} = this.context;
+
+        this.prices = getAvailablePrices({site});
         let activePrice = getMemberActivePrice({member});
+
+        if (activePrice) {
+            this.prices = getFilteredPrices({prices: this.prices, currency: activePrice.currency});
+        }
+
         let selectedPrice = activePrice ? this.prices.find((d) => {
             return (d.id === activePrice.id);
         }) : null;
-        if (selectedPrice) {
-            this.prices = getFilteredPrices({prices: this.prices, currency: selectedPrice.currency});
-        }
+
         // Select first plan as default for free member
         if (!isPaidMember({member}) && this.prices.length > 0) {
             selectedPrice = this.prices[0];
@@ -342,8 +393,8 @@ export default class AccountPlanPage extends React.Component {
         }
     }
 
-    onPlanSelect(e, priceId) {
-        e.preventDefault();
+    onPlanSelect = (e, priceId) => {
+        e?.preventDefault();
 
         const {member} = this.context;
 
@@ -428,7 +479,7 @@ export default class AccountPlanPage extends React.Component {
                         {...{plans, selectedPlan, showConfirmation, confirmationPlan, confirmationType}}
                         onConfirm={(...args) => this.onConfirm(...args)}
                         onCancelSubscription = {data => this.onCancelSubscription(data)}
-                        onPlanSelect = {(e, name) => this.onPlanSelect(e, name)}
+                        onPlanSelect = {this.onPlanSelect}
                         onPlanCheckout = {(e, name) => this.onPlanCheckout(e, name)}
                     />
                 </div>

@@ -1,10 +1,12 @@
 import React, {useContext, useEffect, useState} from 'react';
 import Switch from '../common/Switch';
-import {getAllProducts, getCurrencySymbol, getPriceString, getStripeAmount, isCookiesDisabled} from '../../utils/helpers';
+import {ReactComponent as CheckmarkIcon} from '../../images/icons/checkmark.svg';
+import {getSiteProducts, getCurrencySymbol, getPriceString, getStripeAmount, isCookiesDisabled, getMemberActivePrice, getAvailablePrices} from '../../utils/helpers';
 import AppContext from '../../AppContext';
+import {ChangeProductPlansSection} from './PlansSection';
 
 export const ProductsSectionStyles = ({site}) => {
-    const products = getAllProducts({site});
+    const products = getSiteProducts({site});
     const noOfProducts = products.length;
     return `
         .gh-portal-products {
@@ -59,7 +61,7 @@ export const ProductsSectionStyles = ({site}) => {
 
         .gh-portal-products-grid {
             display: grid;
-            grid-template-columns: repeat(${productColumns(noOfProducts)}, minmax(0, 280px));
+            grid-template-columns: repeat(${productColumns(noOfProducts)}, minmax(0, ${(productColumns(noOfProducts) <= 3 ? `360px` : `300px`)}));
             grid-gap: 32px;
             margin: 0 auto;
             padding: 32px 2vw;
@@ -124,7 +126,7 @@ export const ProductsSectionStyles = ({site}) => {
         }
 
         .gh-portal-product-name {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 500;
             line-height: 1.45em;
             letter-spacing: 0.5px;
@@ -134,14 +136,15 @@ export const ProductsSectionStyles = ({site}) => {
             min-height: 24px;
             word-break: break-word;
             width: 100%;
+            color: var(--grey1);
             border-bottom: 1px solid var(--grey12);
             padding: 8px 0 16px;
             margin-bottom: 12px;
         }
 
         .gh-portal-product-description {
-            font-size: 1.4rem;
-            line-height: 1.5em;
+            font-size: 1.35rem;
+            line-height: 1.45em;
             text-align: center;
             color: var(--grey5);
             margin-bottom: 24px;
@@ -168,8 +171,9 @@ export const ProductsSectionStyles = ({site}) => {
             align-self: flex-end;
             font-size: 1.3rem;
             line-height: 1.6em;
-            color: var(--grey7);
-            letter-spacing: 0.2px;
+            color: var(--grey4);
+            letter-spacing: 0.3px;
+            margin-left: 2px;
         }
 
         .gh-portal-product-alternative-price {
@@ -178,8 +182,48 @@ export const ProductsSectionStyles = ({site}) => {
             color: var(--grey7);
             text-align: center;
             margin-top: 4px;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.3px;
             height: 18px;
+        }
+
+        .gh-portal-product-benefits {
+            font-size: 1.3rem;
+            line-height: 1.45em;
+            margin: -12px 0 0;
+            padding: 14px 24px;
+            border-top: 1px solid var(--grey12);
+            color: var(--grey3);
+            width: 100%;
+        }
+
+        .gh-portal-product-benefit {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .gh-portal-benefit-checkmark {
+            width: 12px;
+            height: 12px;
+            min-width: 12px;
+            margin: 3px 6px 0 0;
+            overflow: visible;
+        }
+
+        .gh-portal-benefit-checkmark path {
+            stroke-width: 2.5px;
+        }
+
+        .gh-portal-benefit-title {
+            flex-grow: 1;
+        }
+
+        .gh-portal-product-benefits.vertical {
+            display: none !important;
+        }
+
+        .gh-portal-products-grid.change-plan {
+            padding: 0;
         }
 
         @media (max-width: 480px) {
@@ -191,7 +235,7 @@ export const ProductsSectionStyles = ({site}) => {
             .gh-portal-products-grid {
                 grid-template-columns: unset;
                 grid-gap: 20px;
-                padding: 32px 0;
+                padding: 32px 0 0;
                 width: 100%;
             }
 
@@ -201,10 +245,10 @@ export const ProductsSectionStyles = ({site}) => {
 
             .gh-portal-product-card {
                 display: grid;
-                grid-template-columns: 1fr auto;
+                grid-template-columns: 1fr minmax(60px, auto);
                 grid-gap: 12px;
                 align-items: start;
-                min-height: unset;
+                min-height: 68px;
                 padding: 12px 20px;
                 background: none;
                 border: 1px solid var(--grey12);
@@ -233,6 +277,8 @@ export const ProductsSectionStyles = ({site}) => {
 
             .gh-portal-product-price {
                 position: relative;
+                justify-content: flex-end;
+                width: 100%;
             }
 
             .gh-portal-product-price .currency-sign {
@@ -257,6 +303,140 @@ export const ProductsSectionStyles = ({site}) => {
             .gh-portal-product-alternative-price {
                 display: none;
             }
+
+            .gh-portal-product-benefits {
+                display: none;
+            }
+
+            .gh-portal-product-benefits.vertical {
+                grid-column: 2;
+                padding: 12px 20px;
+                margin-top: 0px;
+                display: block !important;
+                grid-row: 2;
+                grid-column: 1 / 3;
+            }
+
+            .gh-portal-product-benefit:last-of-type {
+                margin-bottom: 0;
+            }
+        }
+
+        .gh-portal-upgrade-product.gh-portal-products {
+            margin: 0 -32px;
+            background: none;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-products-grid {
+            grid-template-columns: unset;
+            grid-gap: 20px;
+            width: 100%;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-products-grid:not(.change-plan) {
+            padding: 32px 0 0;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-products-grid.change-plan .gh-portal-product-card {
+            cursor: auto;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-products-priceswitch {
+            padding-top: 18px;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-card {
+            display: grid;
+            grid-template-columns: 1fr minmax(60px,auto);
+            grid-gap: 12px;
+            align-items: start;
+            min-height: 68px;
+            padding: 12px 20px;
+            background: none;
+            border: 1px solid var(--grey11);
+            box-shadow: none;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-card-header {
+            grid-row: 1;
+            display: grid;
+            grid-template-columns: 20px auto;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-name {
+            margin: 4px 0;
+            padding: 0;
+            text-align: left;
+            border-bottom: none;
+            min-height: unset;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-description {
+            grid-column: 2 / 3;
+            grid-row: 2;
+            margin-bottom: 0px;
+            text-align: left;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-price {
+            position: relative;
+            justify-content: flex-end;
+            width: 100%;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-price .currency-sign {
+            font-size: 1.5rem;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-price .amount {
+            font-size: 2.6rem;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-price .billing-period {
+            position: absolute;
+            right: 0;
+            top: 24px;
+            font-size: 1.2rem;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-card-footer {
+            grid-row: 1;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-alternative-price {
+            display: none;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-benefits {
+            display: none;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-benefits.vertical {
+            grid-column: 2;
+            padding: 12px 20px;
+            margin-top: 0px;
+            display: block !important;
+            grid-row: 2;
+            grid-column: 1 / 3;
+        }
+
+        .gh-portal-upgrade-product .gh-portal-product-benefit:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .gh-portal-products-grid.change-plan .gh-portal-product-card-header {
+            grid-template-columns: auto;
+            grid-column: 1 / 3;
+        }
+
+        .gh-portal-products-grid.change-plan .gh-portal-product-name {
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .gh-portal-products-grid.change-plan .gh-portal-product-description {
+            text-align: center;
+            grid-column: 1;
         }
     `;
 };
@@ -268,7 +448,6 @@ const ProductsContext = React.createContext({
 });
 
 function productColumns(noOfProducts) {
-    // TODO: has to take Free on/off setting into account
     return noOfProducts >= 5 ? 5 : noOfProducts;
 }
 
@@ -299,11 +478,44 @@ function Checkbox({name, id, onProductSelect, isChecked, disabled = false}) {
     );
 }
 
+function ProductBenefits({product}) {
+    if (!product.benefits || !product.benefits.length) {
+        return null;
+    }
+
+    return product.benefits.map((benefit) => {
+        return (
+            <div className="gh-portal-product-benefit">
+                <CheckmarkIcon className='gh-portal-benefit-checkmark' alt=''/>
+                <div className="gh-portal-benefit-title">{benefit.name}</div>
+            </div>
+        );
+    });
+}
+
+function ProductBenefitsContainer({product, showVertical = false}) {
+    if (!product.benefits || !product.benefits.length) {
+        return null;
+    }
+
+    let className = 'gh-portal-product-benefits';
+    if (showVertical) {
+        className += ' vertical';
+    }
+    return (
+        <div className={className}>
+            <ProductBenefits product={product} />
+        </div>
+    );
+}
+
 function ProductCardFooterAlternatePrice({price}) {
     const {site} = useContext(AppContext);
     const {portal_plans: portalPlans} = site;
     if (!portalPlans.includes('monthly') || !portalPlans.includes('yearly')) {
-        return null;
+        return (
+            <div className="gh-portal-product-alternative-price"></div>
+        );
     }
 
     return (
@@ -347,8 +559,10 @@ function ProductCard({product}) {
                 }} />
                 <h4 className="gh-portal-product-name">{product.name}</h4>
                 <div className="gh-portal-product-description">{product.description}</div>
+                <ProductBenefitsContainer product={product} />
             </div>
             <ProductCardFooter product={product} />
+            <ProductBenefitsContainer product={product} showVertical={true} />
         </div>
     );
 }
@@ -441,7 +655,7 @@ function getActiveInterval({portalPlans, selectedInterval = 'month'}) {
     }
 }
 
-function ProductsSection({onPlanSelect, products}) {
+function ProductsSection({onPlanSelect, products, type = null}) {
     const {site} = useContext(AppContext);
     const {portal_plans: portalPlans} = site;
     const defaultInterval = getActiveInterval({portalPlans});
@@ -452,20 +666,35 @@ function ProductsSection({onPlanSelect, products}) {
 
     const selectedPrice = getSelectedPrice({products, selectedInterval, selectedProduct});
     const activeInterval = getActiveInterval({portalPlans, selectedInterval});
+
     useEffect(() => {
         onPlanSelect(null, selectedPrice.id);
     }, [selectedPrice.id, onPlanSelect]);
 
+    useEffect(() => {
+        setSelectedProduct(defaultProductId);
+    }, [defaultProductId]);
+
     if (!portalPlans.includes('monthly') && !portalPlans.includes('yearly')) {
         return null;
     }
+
+    if (products.length === 0) {
+        return null;
+    }
+
+    let className = 'gh-portal-products';
+    if (type === 'upgrade') {
+        className += ' gh-portal-upgrade-product';
+    }
+
     return (
         <ProductsContext.Provider value={{
             selectedInterval: activeInterval,
             selectedProduct,
             setSelectedProduct
         }}>
-            <section className="gh-portal-products">
+            <section className={className}>
                 <ProductPriceSwitch
                     selectedInterval={activeInterval}
                     setSelectedInterval={setSelectedInterval}
@@ -476,6 +705,59 @@ function ProductsSection({onPlanSelect, products}) {
                 </div>
             </section>
         </ProductsContext.Provider>
+    );
+}
+
+function ChangeProductCard({product, onPlanSelect}) {
+    const {member} = useContext(AppContext);
+    const cardClass = 'gh-portal-product-card';
+    const {site} = useContext(AppContext);
+    const plans = getAvailablePrices({site, products: [product]});
+    const selectedPlan = getMemberActivePrice({member});
+    return (
+        <div>
+            <div className={cardClass} key={product.id}>
+                <div className="gh-portal-product-card-header">
+                    <h4 className="gh-portal-product-name">{product.name}</h4>
+                    <div className="gh-portal-product-description" style={{
+                        gridColumn: '1/2'
+                    }}>{product.description}</div>
+                    <ProductBenefitsContainer product={product} />
+                </div>
+                {/* <ProductCardFooter product={product} /> */}
+                <ProductBenefitsContainer product={product} showVertical={true} />
+            </div>
+            <ChangeProductPlansSection
+                product={product}
+                plans={plans}
+                selectedPlan={selectedPlan?.id}
+                changePlan={true}
+                onPlanSelect={onPlanSelect}
+            />
+        </div>
+    );
+}
+
+function ChangeProductCards({products, onPlanSelect}) {
+    return products.map((product) => {
+        if (product.id === 'free') {
+            return null;
+        }
+        return (
+            <ChangeProductCard product={product} key={product.id} onPlanSelect={onPlanSelect} />
+        );
+    });
+}
+
+export function ChangeProductSection({products, onPlanSelect}) {
+    let className = 'gh-portal-products gh-portal-upgrade-product';
+
+    return (
+        <section className={className}>
+            <div className="gh-portal-products-grid change-plan">
+                <ChangeProductCards products={products} onPlanSelect={onPlanSelect} />
+            </div>
+        </section>
     );
 }
 
