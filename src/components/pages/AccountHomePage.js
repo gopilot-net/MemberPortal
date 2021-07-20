@@ -160,7 +160,7 @@ const PaidAccountActions = () => {
         let label = '';
         if (price) {
             const {amount = 0, currency, interval} = price;
-            label = `${Intl.NumberFormat('en', {currency, style: 'currency'}).format(amount / 100)}/${interval}`;
+            label = `${Intl.NumberFormat('en', {currency, style: 'currency'}).format(amount / 100)}/${portalSettings.fields.accountProfileLabels[interval]}`;
         }
         if (isComplimentary) {
             label = label ? `${portalSettings.fields.terms.Complimentary.label} (${label})` : portalSettings.fields.terms.Complimentary.label;
@@ -255,7 +255,7 @@ const AccountActions = () => {
         onAction('updateNewsletter', {subscribed: !sub});
     };
 
-    let label = subscribed ? portalSettings.fields.accountLabels.subscribed : portalSettings.fields.accountProfileLabels.unsubscribed;
+    let label = subscribed ? portalSettings.fields.accountProfileLabels.subscribed : portalSettings.fields.accountProfileLabels.unsubscribed;
     return (
         <div>
             <div className='gh-portal-list'>

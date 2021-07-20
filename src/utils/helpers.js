@@ -246,13 +246,13 @@ export function getSiteProducts({site}) {
     return products;
 }
 
-export function getFreeBenefits() {
+export function getFreeBenefits(portalSettings) {
     return [{
-        name: 'Access to free articles'
+        name: portalSettings.fields.terms.accessToFree
     }];
 }
 
-export function getProductBenefits({product, site = null}) {
+export function getProductBenefits({product, site = null, portalSettings}) {
     if (product?.monthlyPrice && product?.yearlyPrice) {
         const availablePrices = getAvailablePrices({site, products: [product]});
         const yearlyDiscount = calculateDiscount(product.monthlyPrice.amount, product.yearlyPrice.amount);
@@ -263,7 +263,7 @@ export function getProductBenefits({product, site = null}) {
         const yearlyBenefits = [...monthlyBenefits];
         if (yearlyDiscount > 0 && availablePrices.length > 1) {
             yearlyBenefits.push({
-                name: `${yearlyDiscount}% discount`
+                name: `${yearlyDiscount}% ${portalSettings.fields.terms.discount}`
             });
         }
         return {

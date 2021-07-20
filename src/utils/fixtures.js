@@ -23,11 +23,11 @@ const prices = [
     }
 ];
 
-const products = [
+let products = [
     {
         id: 'product_1',
         name: 'Ball is life membership',
-        description: 'Get access to everything and lock in early adopter pricing for life + listen to my podcast',
+        description: 'Aferim Get access to everything and lock in early adopter pricing for life + listen to my podcast',
         monthlyPrice: {
             id: '6085adc776909b1a2382369a',
             stripe_price_id: '7d6c89c0289ca1731226e86b95b5a162085b8561ca0d10d3a4f03afd3e3e6ba6',
@@ -53,26 +53,26 @@ const products = [
         benefits: [
             {
                 id: 'a1',
-                name: 'Limited early adopter pricing'
+                name: 'Iyi Limited early adopter pricing'
             },
             {
                 id: 'a2',
-                name: 'Latest gear reviews'
+                name: 'Iyi Latest gear reviews'
             },
             {
                 id: 'a3',
-                name: 'Weekly email newsletter'
+                name: 'Iyi Weekly email newsletter'
             },
             {
                 id: 'a4',
-                name: 'Listen to my podcast'
+                name: 'Iyi Listen to my podcast'
             }
         ]
     },
     {
         id: 'product_2',
         name: 'Silver',
-        description: 'Access to all members articles and weekly podcast',
+        description: 'Aferim Access to all members articles and weekly podcast',
         monthlyPrice: {
             id: '6086d2c776909b111182369a',
             stripe_price_id: '7d6c89c0289ca1731226e86b95b5a162085b8561ca0d10d3a4f03afd3e3e6ba6',
@@ -98,22 +98,22 @@ const products = [
         benefits: [
             {
                 id: 'b1',
-                name: 'Limited early adopter pricing'
+                name: 'Iyi Limited early adopter pricing'
             },
             {
                 id: 'b2',
-                name: 'Latest gear reviews'
+                name: 'Iyi Latest gear reviews'
             },
             {
                 id: 'b3',
-                name: 'Weekly email newsletter'
+                name: 'Iyi Weekly email newsletter'
             }
         ]
     },
     {
         id: 'product_3',
         name: 'Bronze',
-        description: 'Access to all members articles',
+        description: 'Aferim Access to all members articles',
         monthlyPrice: {
             id: '6086d2c776909b1a23823622',
             stripe_price_id: '7d6c89c0289ca1731226e86b95b5a162085b8561ca0d10d3a4f03afd3e3e6ba6',
@@ -139,23 +139,24 @@ const products = [
         benefits: [
             {
                 id: 'c1',
-                name: 'Latest gear reviews'
+                name: 'Iyi Latest gear reviews'
             },
             {
                 id: 'c2',
-                name: 'Weekly email newsletter'
+                name: 'Iyi Weekly email newsletter'
             }
         ]
     }
 ];
 
+products = [];
 export const site = {
     title: 'A Ghost site',
     description: 'Thoughts, stories and ideas.',
     logo: 'https://static.ghost.org/v4.0.0/images/ghost-orb-1.png',
     icon: 'https://static.ghost.org/v4.0.0/images/ghost-orb-1.png',
     accent_color: '#45C32E',
-    url: 'http://localhost:2368/',
+    url: 'https://dev.gopilot.net/',
     plans: {
         monthly: 5000,
         yearly: 150000,

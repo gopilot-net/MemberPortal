@@ -19,9 +19,9 @@ const React = require('react');
 const DEV_MODE_DATA = {
     showPopup: true,
     site: Fixtures.site,
-    member: Fixtures.member.preview,
-    //page: 'accountHome'
-    page: 'signup'
+    member: Fixtures.member.paid,
+    page: 'accountHome'
+    //page: 'signup'
 };
 
 function SentryErrorBoundary({site, children}) {

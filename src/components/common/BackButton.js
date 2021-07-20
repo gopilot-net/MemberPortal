@@ -1,5 +1,7 @@
 import React from 'react';
 import {ReactComponent as LeftArrowIcon} from '../../images/icons/arrow-left.svg';
+import {useContext} from 'react';
+import AppContext from '../../AppContext';
 
 export const BackButtonStyles = `
     .gh-portal-btn-back,
@@ -32,7 +34,9 @@ export const BackButtonStyles = `
     }
 `;
 
-function ActionButton({label = 'Back', brandColor = '#3eb0ef', hidden = false, onClick}) {
+function ActionButton({label, brandColor = '#3eb0ef', hidden = false, onClick}) {
+    const {portalSettings} = useContext(AppContext);
+    label = label || portalSettings.fields.other.back;
     if (hidden) {
         return null;
     }

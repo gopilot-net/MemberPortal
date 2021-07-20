@@ -499,7 +499,7 @@ function PlanOptions({plans, selectedPlan, onPlanSelect, changePlan}) {
             planDetails.feature = 'Free preview';
             break;
         default:
-            displayName = interval === 'month' ? 'Monthly' : 'Yearly';
+            displayName = interval === 'month' ? '1Monthly' : '1Yearly';
             planDetails.feature = description || 'Full access';
             break;
         }
@@ -552,16 +552,16 @@ function PlanBenefit({benefit}) {
 }
 
 function PlanBenefits({product, plans, selectedPlan}) {
-    const {site} = useContext(AppContext);
-    const productBenefits = getProductBenefits({product, site});
+    const {site, portalSettings} = useContext(AppContext);
+    const productBenefits = getProductBenefits({product, site, portalSettings});
     const plan = plans.find((_plan) => {
         return _plan.id === selectedPlan;
     });
     let planBenefits = [];
     let planDescription = product.description;
     if (selectedPlan === 'free') {
-        planBenefits = getFreeBenefits();
-        planDescription = `Free preview`;
+        planBenefits = getFreeBenefits(portalSettings);
+        planDescription = portalSettings.fields.terms.Free.desc;
     } else if (plan?.interval === 'month') {
         planBenefits = productBenefits.monthly;
     } else if (plan?.interval === 'year') {
@@ -687,7 +687,8 @@ function ChangePlanOptions({plans, selectedPlan, onPlanSelect, changePlan}) {
     return plans.map(({name, currency_symbol: currencySymbol, amount, description, interval, id}) => {
         const price = amount / 100;
         const isChecked = selectedPlan === id;
-        let displayName = interval === 'month' ? 'Monthly' : 'Yearly';
+        const {portalSettings} = useContext(AppContext);
+        let displayName = interval === 'month' ? portalSettings.fields.terms.Monthly.label : portalSettings.fields.terms.Yearly.label;
 
         let planClass = (isChecked ? 'gh-portal-plan-section checked' : 'gh-portal-plan-section');
         planClass += ' gh-portal-change-plan-section';
