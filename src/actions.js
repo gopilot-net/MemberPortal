@@ -84,7 +84,7 @@ async function signin({data, api, state}) {
             action: 'signin:failed',
             popupNotification: createPopupNotification({
                 type: 'signin:failed', autoHide: false, closeable: true, state, status: 'error',
-                message: 'Failed to log in, please try again'
+                message: this.state.portalSettings.fields.signinMsg.failed
             })
         };
     }
@@ -241,7 +241,7 @@ async function updateNewsletter({data, state, api}) {
             member: member,
             popupNotification: createPopupNotification({
                 type: action, autoHide: true, closeable: true, state, status: 'success',
-                message: 'Email newsletter settings updated'
+                message: state.portalSettings.fields.actMsg.updNewsltr.succUpdSet
             })
         };
     } catch (e) {
@@ -249,7 +249,7 @@ async function updateNewsletter({data, state, api}) {
             action: 'updateNewsletter:failed',
             popupNotification: createPopupNotification({
                 type: 'updateNewsletter:failed', autoHide: true, closeable: true, state, status: 'error',
-                message: 'Failed to update newsletter settings'
+                message: state.portalSettings.fields.actMsg.updNewsltr.failUpdSet
             })
         };
     }
@@ -328,11 +328,11 @@ async function updateProfile({data, state, api}) {
                 page: 'accountHome',
                 popupNotification: createPopupNotification({
                     type: 'updateProfile:success', autoHide: true, closeable: true, status: 'success', state,
-                    message: 'Check your inbox to verify email update'
+                    message: state.portalSettings.fields.actMsg.updProf.chkInboxEmailUpd
                 })
             };
         }
-        const message = !dataUpdate.success ? 'Failed to update account data' : 'Failed to send verification email';
+        const message = !dataUpdate.success ? state.portalSettings.fields.actMsg.updProf.failUpdAcctData : state.portalSettings.fields.actMsg.updProf.failSendVerifEmail;
 
         return {
             action: 'updateProfile:failed',
@@ -344,7 +344,7 @@ async function updateProfile({data, state, api}) {
     } else if (dataUpdate) {
         const action = dataUpdate.success ? 'updateProfile:success' : 'updateProfile:failed';
         const status = dataUpdate.success ? 'success' : 'error';
-        const message = !dataUpdate.success ? 'Failed to update account details' : 'Account details updated successfully';
+        const message = !dataUpdate.success ? state.portalSettings.fields.actMsg.updProf.failUpdAcctDetail : state.portalSettings.fields.actMsg.updProf.succUpdAcctDetail;
         return {
             action,
             ...(dataUpdate.success ? {member: dataUpdate.member} : {}),
@@ -356,7 +356,7 @@ async function updateProfile({data, state, api}) {
     } else if (emailUpdate) {
         const action = emailUpdate.success ? 'updateProfile:success' : 'updateProfile:failed';
         const status = emailUpdate.success ? 'success' : 'error';
-        const message = !emailUpdate.success ? 'Failed to send verification email' : 'Check your inbox to verify email update';
+        const message = !emailUpdate.success ? state.portalSettings.fields.actMsg.updProf.failSendVerifEmail : state.portalSettings.fields.actMsg.updProf.chkInboxEmailUpd;
         return {
             action,
             ...(emailUpdate.success ? {page: 'accountHome'} : {}),
@@ -370,7 +370,7 @@ async function updateProfile({data, state, api}) {
         page: 'accountHome',
         popupNotification: createPopupNotification({
             type: 'updateProfile:success', autoHide: true, closeable: true, status: 'success', state,
-            message: 'Account details updated successfully'
+            message: state.portalSettings.fields.actMsg.updProf.succUpdAcctDetail
         })
     };
 }

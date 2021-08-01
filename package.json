@@ -35,6 +35,7 @@
     "start:dev": "node ./scripts/start-mode.js",
     "dev": "node ./scripts/dev-mode.js",
     "build:dev": "env-cmd -f .env.dev npm run build:combined ",
+    "build:prod": "env-cmd -f .env.prod npm run build:combined ",
     "build": "npm run build:combined",
     "build:original": "react-scripts build",
     "build:combined": "node ./scripts/build-combined.js",

@@ -39,6 +39,8 @@ function init() {
     let customSiteUrl = getSiteUrl();
     //customSiteUrl = 'https://dev.gopilot.net/blog/';
     const siteUrl = customSiteUrl || window.location.origin;
+    //console.log(siteUrl);
+    //const siteUrl = 'https://dev.gopilot.net/blog';
     setup();
     ReactDOM.render(
         <React.StrictMode>

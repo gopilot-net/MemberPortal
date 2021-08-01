@@ -29,42 +29,42 @@ const Styles = () => {
 const NotificationText = ({type, status, context}) => {
     const signinPortalLink = getPortalLink({page: 'signin', siteUrl: context.site.url});
     const singupPortalLink = getPortalLink({page: 'signup', siteUrl: context.site.url});
-
+    const accountNotif = context.portalSettings.fields.accountNotif;
     if (type === 'signin' && status === 'success' && context.member) {
         const firstname = context.member.firstname || '';
         return (
             <p>
-                Welcome back{(firstname ? ', ' + firstname : '')}!<br />You've successfully signed in.
+                {accountNotif.signinSuccessWelcome}{(firstname ? ', ' + firstname : '')}!<br />{accountNotif.signinSuccessMsg}
             </p>
         );
     } else if (type === 'signin' && status === 'error') {
         return (
             <p>
-                Could not sign in. Login link expired. <a href={signinPortalLink} target="_parent">Click here to retry</a>
+                {accountNotif.signinError} <a href={signinPortalLink} target="_parent">{accountNotif.clickToRetry}</a>
             </p>
         );
     } else if (type === 'signup' && status === 'success') {
         return (
             <p>
-                You've successfully subscribed to <br /><strong>{context.site.title}</strong>
+                {accountNotif.signupSuccess} <br /><strong>{context.site.title}</strong>
             </p>
         );
     } else if (type === 'updateEmail' && status === 'success') {
         return (
             <p>
-                Success! Your email is updated.
+                {accountNotif.updateEmailSuccess}
             </p>
         );
     } else if (type === 'updateEmail' && status === 'error') {
         return (
             <p>
-                Could not update email! Invalid link.
+                {accountNotif.updateEmailError}
             </p>
         );
     } else if (type === 'signup' && status === 'error') {
         return (
             <p>
-                Signup error: Invalid link <br /><a href={singupPortalLink} target="_parent">Click here to retry</a>
+                {accountNotif.signupError} <br /><a href={singupPortalLink} target="_parent">{accountNotif.clickToRetry}</a>
             </p>
         );
     } else if (type === 'stripe:checkout' && status === 'success') {

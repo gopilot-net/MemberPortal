@@ -27,13 +27,15 @@ export default class MagicLinkPage extends React.Component {
     static contextType = AppContext;
 
     renderFormHeader() {
+        const messages = this.context.portalSettings.fields.magicLink.msg;
         return (
             <section className='gh-portal-inbox-notification'>
                 <header className='gh-portal-header'>
                     <EnvelopeIcon className='gh-portal-icon gh-portal-icon-envelope' />
-                    <h2>We've sent you a login link!</h2>
+
+                    <h2>{messages.sentHeader}</h2>
                 </header>
-                <p>If the email doesn't arrive in 3 minutes, be sure to check your spam folder!</p>
+                <p>{messages.sentBody}</p>
             </section>
         );
     }
@@ -56,7 +58,7 @@ export default class MagicLinkPage extends React.Component {
     }
 
     renderCloseButton() {
-        const label = 'Close';
+        const label = this.context.portalSettings.fields.other.close;
         return (
             <ActionButton
                 style={{width: '100%'}}
